@@ -20,6 +20,12 @@ namespace Blockchain
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllersWithViews();
+            services.AddCors(o => o.AddPolicy("MyPolicy", builder =>
+            {
+                builder.AllowAnyOrigin()
+                        .AllowAnyMethod()
+                        .AllowAnyHeader();
+            }));
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "My API", Version = "v1" });
@@ -30,10 +36,9 @@ namespace Blockchain
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+
             if (env.IsDevelopment())
-            {
                 app.UseDeveloperExceptionPage();
-            }
             else
             {
                 app.UseExceptionHandler("/Home/Error");
@@ -42,17 +47,14 @@ namespace Blockchain
             }
             app.UseHttpsRedirection();
             app.UseStaticFiles();
-
             app.UseSwagger();                // middleware to serve generated swagger as a json endpoint
             app.UseSwaggerUI(c =>            // middleware to serve swagger-ui specifying the swagger json endpoint
             {
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
             });
-
             app.UseRouting();
-
+            app.UseCors();
             app.UseAuthorization();
-
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllerRoute(

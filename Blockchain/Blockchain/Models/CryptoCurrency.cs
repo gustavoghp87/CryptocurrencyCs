@@ -24,9 +24,9 @@ namespace Blockchain.Models
         public CryptoCurrency()
         {
             _minersWallets = RSA.RSA.KeyGenerate();
-            _minerPrivateKey = "asdasd";
-            NodeId = "ad";
-            var initialTransaction = new Transaction { Sender = "0", Recipient = NodeId, Amount = 50, Fees = 0, Signature = "" };
+            _minerPrivateKey = "minerPrivateKeyabcdef0123456789";
+            NodeId = "nodeIdabcdef0123456789";
+            var initialTransaction = new Transaction { Sender = "initialUser", Recipient = NodeId, Amount = 50, Fees = 0, Signature = "" };
             _currentTransactions.Add(initialTransaction);
             CreateNewBlock(proof: 100, previousHash: "1");
         }
@@ -78,7 +78,7 @@ namespace Blockchain.Models
                 blockCount = 0;
                 reward = reward / 2;
             }
-            var transaction = new Transaction { Sender = "0", Recipient = NodeId, Amount = reward, Fees = 0, Signature = "" };
+            var transaction = new Transaction { Sender = "senderProofOfWork", Recipient = NodeId, Amount = reward, Fees = 0, Signature = "" };
             _currentTransactions.Add(transaction);
             blockCount++;
             return proof;

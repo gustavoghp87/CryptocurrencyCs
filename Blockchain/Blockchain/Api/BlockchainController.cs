@@ -1,14 +1,16 @@
 ﻿using Blockchain.Models;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq;
 
 namespace Blockchain.Api
 {
+    [EnableCors("MyPolicy")]
     [Produces("application/json")]
     [Route("")]
     public class BlockchainController : Controller
     {
-        public static CryptoCurrency blockchain = new();
+        public static readonly CryptoCurrency blockchain = new();
 
         [HttpPost("transactions/new")]
         public IActionResult New_transaction([FromBody] Transaction transaction)

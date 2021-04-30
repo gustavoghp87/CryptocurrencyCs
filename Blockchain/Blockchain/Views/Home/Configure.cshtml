@@ -1,0 +1,49 @@
+﻿@model List<Node>
+
+<div class="container">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card-body">
+                <h4 class="card-title"> Add Blockchain Nodes </h4>
+                <p class="card-text"> Enter a list of Blockchain node URL separated by comma and click "Add" </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="alert container alert-secondary">
+    <form id="node_form" method="POST" action="@Url.Action("RegisterNodes","Home")">
+        <div class="row">
+            <label class="col-sm-2"> </label>
+            <div class="col-sm-10">
+                <input type="text" name="nodes" id="nodes" rows="2" class="form-control" />
+            </div>
+        </div>
+        <br />
+        <div class="row">
+            <div class="col-lg-12 text-center">
+                <input type="submit" id="add_node_button" class="btn btn-primary btn-lg" value="Add Node" />
+            </div>
+        </div>
+    </form>
+</div>
+
+<hr />
+
+<div class="container">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card-body">
+                <h4> This node can retrieve Blockchain data from the following nodes: </h4>
+            </div>
+        </div>
+        <div class="col-lg-12" id="list_nodes">
+            <ul>
+                @foreach (var item in Model)
+                {
+                    <li><a href="@item.Address"> @item.Address </a></li>
+                }
+            </ul>
+        </div>
+    </div>
+</div>
