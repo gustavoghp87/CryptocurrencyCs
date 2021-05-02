@@ -9,20 +9,19 @@ namespace Blockchain.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly CryptoCurrency _blockchain;
-        private readonly ILogger<HomeController> _logger;
+        public CryptoCurrency _blockchain = BlockchainController.blockchain;
+        private ILogger<HomeController> _logger;
 
         public HomeController(ILogger<HomeController> logger)
         {
             _logger = logger;
-            _blockchain = BlockchainController.blockchain;
         }
 
         public IActionResult Index()
         {
             List<Transaction> transactions = _blockchain.GetTransactions();
+            ViewBag.Transactions = transactions;                                         // respect order!
             List<Block> blocks = _blockchain.GetBlocks();
-            ViewBag.Transactions = transactions;
             ViewBag.Blocks = blocks;
             return View();
         }

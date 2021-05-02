@@ -15,7 +15,9 @@ namespace Blockchain.Api
         [HttpPost("transactions/new")]
         public IActionResult New_transaction([FromBody] Transaction transaction)
         {
-            return Ok(blockchain.CreateTransaction(transaction));
+            var response = blockchain.CreateTransaction(transaction);
+            if (!response) return NotFound();
+            return Ok(response);
         }
 
         [HttpGet("transactions/get")]
@@ -39,7 +41,7 @@ namespace Blockchain.Api
                 message = "New Block Forged",
                 block_number = block.Index,
                 transactions = block.Transactions.ToArray(),
-                nonce = block.Proof,
+                nonce = block.Nonce,
                 previousHash = block.PreviousHash
             });
         }

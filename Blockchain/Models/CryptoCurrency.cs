@@ -12,9 +12,9 @@ namespace Blockchain.Models
 {
     public class CryptoCurrency
     {
-        private readonly List<Transaction> _currentTransactions = new();
-        private readonly List<Node> _nodes = new();
-        private List<Block> _chain = new();
+        public List<Transaction> _currentTransactions = new();
+        public List<Node> _nodes = new();
+        public List<Block> _chain = new();
         public string NodeId { get; private set; }
         static int blockCount = 0;
         static decimal reward = 50;
@@ -26,8 +26,9 @@ namespace Blockchain.Models
         public CryptoCurrency()
         {
             minerPrivateKey = minerWallet.PrivateKey;
-            NodeId = minerWallet.PublicKey;
-            var initialTransaction = new Transaction { Sender = "initialUser", Recipient = NodeId, Amount = 50, Fees = 0, Signature = "" };
+            NodeId = "18spHKNekiGLi89nrvCYiTaxtMaLtS3cvT"; // minerWallet.PublicKey;
+            var initialTransaction = new Transaction (50, "Satoshi", NodeId, "", 0 );
+            // L3wKuKpao6RmJSz6pVzU5pZDBa3wJ3ZwhKqkGSqD85cQdCDwtK3g
             _currentTransactions.Add(initialTransaction);
             CreateNewBlock(proof: 100, previousHash: "1");
         }
@@ -39,14 +40,15 @@ namespace Blockchain.Models
 
         private Block CreateNewBlock(int proof, string previousHash = null)
         {
+            // Console.WriteLine(_chain.Count.ToString(), DateTime.UtcNow, _currentTransactions.ToList(), proof, previousHash ?? GetHash(_chain.Last()));
             var block = new Block
-            {
-                Index = _chain.Count,
-                Timestamp = DateTime.UtcNow,
-                Transactions = _currentTransactions.ToList(),
-                Proof = proof,
-                PreviousHash = previousHash ?? GetHash(_chain.Last())
-            };
+            (
+                _chain.Count,
+                DateTime.UtcNow,
+                _currentTransactions.ToList(),
+                proof,
+                previousHash ?? GetHash(_chain.Last())
+            );
             _currentTransactions.Clear();
             _chain.Add(block);
             return block;
@@ -79,7 +81,7 @@ namespace Blockchain.Models
                 blockCount = 0;
                 reward = reward / 2;
             }
-            var transaction = new Transaction { Sender = "senderProofOfWork", Recipient = NodeId, Amount = reward, Fees = 0, Signature = "" };
+            var transaction = new Transaction ( reward, "senderProofOfWork", NodeId, "", 0 );
             _currentTransactions.Add(transaction);
             blockCount++;
             return proof;
@@ -129,7 +131,7 @@ namespace Blockchain.Models
         {
             _currentTransactions.Add(transaction);
             if (transaction.Sender != NodeId)
-                _currentTransactions.Add(new Transaction { Sender = transaction.Sender, Recipient = NodeId, Amount = transaction.Fees, Signature = "", Fees = 0 });
+                _currentTransactions.Add(new Transaction (transaction.Fees, transaction.Sender, NodeId, "", 0 ) );      // add coins issues
         }
 
         private bool ResolveConflicts()
@@ -170,7 +172,7 @@ namespace Blockchain.Models
             {
                 block = chain.ElementAt(currentIndex);
                 if (block.PreviousHash != GetHash(lastBlock)) return false;
-                if (!IsValidProof(block.Transactions, block.Proof, lastBlock.PreviousHash)) return false;
+                if (!IsValidProof(block.Transactions, block.Nonce, lastBlock.PreviousHash)) return false;
                 lastBlock = block;
                 currentIndex++;
             }
@@ -215,14 +217,14 @@ namespace Blockchain.Models
             return response;
         }
 
-        internal object CreateTransaction(Transaction transaction)
+        internal bool CreateTransaction(Transaction transaction)
         {
             var verified = Verify_transaction_signature(transaction, transaction.Signature, transaction.Sender);
-            if (!verified || transaction.Sender == transaction.Recipient) return new { message = "Invalid transaction" };
-            if (!HasBalance(transaction)) return new { message = "Insufficient balance" };
+            if (!verified || transaction.Sender == transaction.Recipient) return false;
+            if (!HasBalance(transaction)) return false;
             AddTransaction(transaction);
-            var blockIndex = _chain.Last() != null ? _chain.Last().Index + 1 : 0;
-            return new { message = $"Transaction will be added to Block {blockIndex}" };
+            // var blockIndex = _chain.Last() != null ? _chain.Last().Index + 1 : 0;
+            return true;
         }
 
         internal List<Transaction> GetTransactions()

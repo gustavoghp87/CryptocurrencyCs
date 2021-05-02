@@ -98,7 +98,7 @@
 
                 <label class="col-sm-12"> Blockchain Node URL: </label>
                 <div class="col-sm-12">
-                    <input type="text" name="node_url" id="node_url" rows="2" class="form-control" value="http://localhost:9999" readonly />
+                    <input type="text" name="node_url" id="node_url" rows="2" class="form-control" value="https://localhost:44354" readonly />
                 </div>
             </div>
 
@@ -136,5 +136,39 @@
                 }
             })
         })
+    })
+
+    $(function () {
+        function getFormData($form) {
+            var unindexed_array = $form.serializeArray();
+            var indexed_array = {};
+            $.map(unindexed_array, function (n, i) {
+                indexed_array[n['name']] = n['value'];
+            });
+            return indexed_array;
+        };
+
+        $('#button_confirm_transaction').click(function () {
+            var $form = $("#confirmation_transaction_form");
+            var data = JSON.stringify(getFormData($form));
+            $.ajax({
+                url: document.getElementById("node_url").value + "/transactions/new",
+                type: 'POST',
+                headers: { 'Access-Control-Allow-Origin': '*' },
+                dataType: 'json',
+                contentType: 'application/json; charset=utf-8',
+                data: data,
+                success: function (response) {
+                    $("#transaction_form")[0].reset();
+                    $("#confirmation_transaction_form")[0].reset();
+                    $("#basicModal").modal('hide');
+                    alert("Success");
+                },
+                error: function (error) {
+                    console.log(error);
+                    alert("Error" + error);
+                }
+            });
+        });
     })
 </script>
