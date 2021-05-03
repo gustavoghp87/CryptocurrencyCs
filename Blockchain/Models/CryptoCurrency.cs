@@ -12,25 +12,22 @@ namespace Blockchain.Models
 {
     public class CryptoCurrency
     {
+        static int blockCount = 0;
+        static decimal reward = 50;
+        static readonly Wallet minerWallet = new();
+
         public List<Transaction> _currentTransactions = new();
         public List<Node> _nodes = new();
         public List<Block> _chain = new();
         public string NodeId { get; private set; }
-        static int blockCount = 0;
-        static decimal reward = 50;
-        static string minerPrivateKey;
-        static Wallet minerWallet = RSA.RSA.KeyGenerate();
-
-        // https://youtu.be/TgGLR5NH0I4?t=8253
 
         public CryptoCurrency()
         {
-            minerPrivateKey = minerWallet.PrivateKey;
             NodeId = "18spHKNekiGLi89nrvCYiTaxtMaLtS3cvT"; // minerWallet.PublicKey;
-            var initialTransaction = new Transaction (50, "Satoshi", NodeId, "", 0 );
+            var initialTransaction = new Transaction (50, "Monetary Issue", NodeId, "", 0 );
             // L3wKuKpao6RmJSz6pVzU5pZDBa3wJ3ZwhKqkGSqD85cQdCDwtK3g
             _currentTransactions.Add(initialTransaction);
-            CreateNewBlock(proof: 100, previousHash: "1");
+            CreateNewBlock(nonce: 100, previousHash: "1");
         }
 
         private void RegisterNode(string address)
@@ -38,7 +35,7 @@ namespace Blockchain.Models
             _nodes.Add(new Node { Address = new Uri(address) });
         }
 
-        private Block CreateNewBlock(int proof, string previousHash = null)
+        private Block CreateNewBlock(int nonce, string previousHash = null)
         {
             // Console.WriteLine(_chain.Count.ToString(), DateTime.UtcNow, _currentTransactions.ToList(), proof, previousHash ?? GetHash(_chain.Last()));
             var block = new Block
@@ -46,7 +43,7 @@ namespace Blockchain.Models
                 _chain.Count,
                 DateTime.UtcNow,
                 _currentTransactions.ToList(),
-                proof,
+                nonce,
                 previousHash ?? GetHash(_chain.Last())
             );
             _currentTransactions.Clear();
@@ -73,24 +70,23 @@ namespace Blockchain.Models
 
         private int CreateProofOfWork(string previousHash)
         {
-            int proof = 0;
-            while (!IsValidProof(_currentTransactions, proof, previousHash))
-                proof++;
+            int nonce = 0;
+            while (!IsValidProof(_currentTransactions, nonce, previousHash))
+                nonce++;
             if (blockCount==10)
             {
                 blockCount = 0;
                 reward = reward / 2;
             }
-            var transaction = new Transaction ( reward, "senderProofOfWork", NodeId, "", 0 );
-            _currentTransactions.Add(transaction);
+            AddTransaction(new Transaction(reward, "Monetary Issue Again", NodeId, "", 0));
             blockCount++;
-            return proof;
+            return nonce;
         }
 
-        private static bool IsValidProof(List<Transaction> transactions, int proof, string previousHash)
+        private static bool IsValidProof(List<Transaction> transactions, int nonce, string previousHash)
         {
             var signatures = transactions.Select(x => x.Signature).ToArray();
-            string guess = $"{signatures}{proof}{previousHash}";
+            string guess = $"{signatures}{nonce}{previousHash}";
             string result = GetSha256(guess);
             return result.StartsWith("00");
         }
@@ -130,7 +126,7 @@ namespace Blockchain.Models
         private void AddTransaction(Transaction transaction)
         {
             _currentTransactions.Add(transaction);
-            if (transaction.Sender != NodeId)
+            if (transaction.Sender != NodeId && transaction.Fees > 0)
                 _currentTransactions.Add(new Transaction (transaction.Fees, transaction.Sender, NodeId, "", 0 ) );      // add coins issues
         }
 

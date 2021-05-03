@@ -1,5 +1,6 @@
 ﻿using BlockchainClient.Models;
 using Microsoft.AspNetCore.Mvc;
+using RSA;
 
 namespace BlockChainClient.Api
 {
@@ -11,7 +12,7 @@ namespace BlockChainClient.Api
         [HttpGet("wallet/new")]
         public IActionResult New_wallet()
         {
-            var wallet = RSA.RSA.KeyGenerate();
+            var wallet = new Wallet();
             return Ok(new
             {
                 private_key = wallet.PrivateKey,

@@ -10,3 +10,15 @@ C:\Users\g\Documents\github\CryptocurrencyCs\Blockchain\RSA\obj\Debug\net5.0\RSA
 C:\Users\g\Documents\github\CryptocurrencyCs\Blockchain\RSA\obj\Debug\net5.0\RSA.dll
 C:\Users\g\Documents\github\CryptocurrencyCs\Blockchain\RSA\obj\Debug\net5.0\ref\RSA.dll
 C:\Users\g\Documents\github\CryptocurrencyCs\Blockchain\RSA\obj\Debug\net5.0\RSA.pdb
+C:\Users\g\Documents\github\CryptocurrencyCs\RSA\bin\Debug\net5.0\RSA.deps.json
+C:\Users\g\Documents\github\CryptocurrencyCs\RSA\bin\Debug\net5.0\RSA.dll
+C:\Users\g\Documents\github\CryptocurrencyCs\RSA\bin\Debug\net5.0\ref\RSA.dll
+C:\Users\g\Documents\github\CryptocurrencyCs\RSA\bin\Debug\net5.0\RSA.pdb
+C:\Users\g\Documents\github\CryptocurrencyCs\RSA\obj\Debug\net5.0\RSA.csprojAssemblyReference.cache
+C:\Users\g\Documents\github\CryptocurrencyCs\RSA\obj\Debug\net5.0\RSA.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\g\Documents\github\CryptocurrencyCs\RSA\obj\Debug\net5.0\RSA.AssemblyInfoInputs.cache
+C:\Users\g\Documents\github\CryptocurrencyCs\RSA\obj\Debug\net5.0\RSA.AssemblyInfo.cs
+C:\Users\g\Documents\github\CryptocurrencyCs\RSA\obj\Debug\net5.0\RSA.csproj.CoreCompileInputs.cache
+C:\Users\g\Documents\github\CryptocurrencyCs\RSA\obj\Debug\net5.0\RSA.dll
+C:\Users\g\Documents\github\CryptocurrencyCs\RSA\obj\Debug\net5.0\ref\RSA.dll
+C:\Users\g\Documents\github\CryptocurrencyCs\RSA\obj\Debug\net5.0\RSA.pdb
