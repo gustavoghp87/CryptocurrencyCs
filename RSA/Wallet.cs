@@ -4,31 +4,16 @@ namespace RSA
 {
     public class Wallet
     {
-        public string PublicKey { get; set; }
-        public BitcoinAddress BitcoinAddress { get; set; }
-        public string PrivateKey { get; set; }
+        public string PublicKey { get; private set; }
+        public BitcoinAddress BitcoinAddress { get; private set; }
+        public string PrivateKey { get; private set; }
 
         public Wallet()
         {
-            Key privateKey = new();
-            PublicKey = privateKey.GetBitcoinSecret(Network.Main).GetAddress(ScriptPubKeyType.Legacy).ToString();
+            var bitcoinKey = new Key().GetBitcoinSecret(Network.Main);
+            PrivateKey = bitcoinKey.ToString();
+            PublicKey = bitcoinKey.GetAddress(ScriptPubKeyType.Legacy).ToString();
             BitcoinAddress = BitcoinAddress.Create(PublicKey, Network.Main);
-            PrivateKey = privateKey.GetBitcoinSecret(Network.Main).ToString();
-        }
-
-        public string Sign(string msgToSign)
-        {
-            var secret = Network.Main.CreateBitcoinSecret(PrivateKey);
-            var signature = secret.PrivateKey.SignMessage(msgToSign);
-            // var v = secret.PubKey.VerifyMessage(msgToSign, signature);
-            return signature;
-        }
-
-        public bool Verify(string originalMessage, string signedMessage)
-        {
-            var pkh = (BitcoinAddress as IPubkeyHashUsable);
-            var bol = pkh.VerifyMessage(originalMessage, signedMessage);
-            return bol;
         }
     }
 }

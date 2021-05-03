@@ -37,10 +37,10 @@
                 foreach (var item in transactions)
                 {
                     <tr>
-                        <td>@i</td>
-                        <td>@item.Recipient</td>
-                        <td>@item.Sender</td>
-                        <td>@item.Amount</td>
+                        <td> @i </td>
+                        <td> @item.Recipient </td>
+                        <td> @item.Sender </td>
+                        <td> @item.Amount </td>
                     </tr>
                     i++;
                 }
@@ -84,6 +84,7 @@
                 <th> Amount </th>
                 <th> Date </th>
                 <th> Block </th>
+                <th> PrevHash </th>
             </tr>
         </thead>
         <tbody>
@@ -100,6 +101,7 @@
                             <td> @item.Amount </td>
                             <td> @block.Timestamp </td>
                             <td> @(block.Index + 1) </td>
+                            <td> @block.PreviousHash </td>
                         </tr>
                     }
                 }

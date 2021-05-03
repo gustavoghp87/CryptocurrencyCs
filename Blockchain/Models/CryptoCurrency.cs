@@ -12,10 +12,9 @@ namespace Blockchain.Models
 {
     public class CryptoCurrency
     {
-        static int blockCount = 0;
-        static decimal reward = 50;
-        static readonly Wallet minerWallet = new();
-
+        private int _blockCount = 0;
+        private decimal _reward = 50;
+        private readonly Wallet minerWallet = new();
         public List<Transaction> _currentTransactions = new();
         public List<Node> _nodes = new();
         public List<Block> _chain = new();
@@ -23,10 +22,8 @@ namespace Blockchain.Models
 
         public CryptoCurrency()
         {
-            NodeId = "18spHKNekiGLi89nrvCYiTaxtMaLtS3cvT"; // minerWallet.PublicKey;
-            var initialTransaction = new Transaction (50, "Monetary Issue", NodeId, "", 0 );
-            // L3wKuKpao6RmJSz6pVzU5pZDBa3wJ3ZwhKqkGSqD85cQdCDwtK3g
-            _currentTransactions.Add(initialTransaction);
+            NodeId = "18spHKNekiGLi89nrvCYiTaxtMaLtS3cvT";           // minerWallet.PublicKey;        L3wKuKpao6RmJSz6pVzU5pZDBa3wJ3ZwhKqkGSqD85cQdCDwtK3g
+            _currentTransactions.Add(new Transaction(50, "Monetary Issue", NodeId, "", 0));
             CreateNewBlock(nonce: 100, previousHash: "1");
         }
 
@@ -59,10 +56,9 @@ namespace Blockchain.Models
 
         private static string GetSha256(string data)
         {
-            var sha256 = new SHA256Managed();
-            var hashBuilder = new StringBuilder();
             byte[] bytes = Encoding.Unicode.GetBytes(data);
-            byte[] hash = sha256.ComputeHash(bytes);
+            byte[] hash = new SHA256Managed().ComputeHash(bytes);
+            var hashBuilder = new StringBuilder();
             foreach (byte x in hash)
                 hashBuilder.Append($"{x:x2}");
             return hashBuilder.ToString();
@@ -73,13 +69,13 @@ namespace Blockchain.Models
             int nonce = 0;
             while (!IsValidProof(_currentTransactions, nonce, previousHash))
                 nonce++;
-            if (blockCount==10)
+            if (_blockCount==10)
             {
-                blockCount = 0;
-                reward = reward / 2;
+                _blockCount = 0;
+                _reward = _reward / 2;
             }
-            AddTransaction(new Transaction(reward, "Monetary Issue Again", NodeId, "", 0));
-            blockCount++;
+            AddTransaction(new Transaction(_reward, "Monetary Issue Again", NodeId, "", 0));
+            _blockCount++;
             return nonce;
         }
 
@@ -91,10 +87,10 @@ namespace Blockchain.Models
             return result.StartsWith("00");
         }
 
-        private static bool Verify_transaction_signature(Transaction transaction, string signedMessage, string publicKey)
+        private static bool Verify_transaction_signature(Transaction transaction)
         {
             string originalMessage = transaction.ToString();
-            bool verified = RSA.RSA.Verify(publicKey, originalMessage, signedMessage);
+            bool verified = RSA.RSA.Verify(transaction.Sender, originalMessage, transaction.Signature);
             return verified;
         }
 
@@ -116,9 +112,9 @@ namespace Blockchain.Models
             foreach (var item in trns)
             {
                 if (item.Recipient == transaction.Sender)
-                    balance = balance + item.Amount;
+                    balance += item.Amount;
                 else
-                    balance = balance - item.Amount;
+                    balance -= item.Amount;
             }
             return balance >= (transaction.Amount + transaction.Fees);
         }
@@ -127,13 +123,12 @@ namespace Blockchain.Models
         {
             _currentTransactions.Add(transaction);
             if (transaction.Sender != NodeId && transaction.Fees > 0)
-                _currentTransactions.Add(new Transaction (transaction.Fees, transaction.Sender, NodeId, "", 0 ) );      // add coins issues
+                _currentTransactions.Add(new Transaction (transaction.Fees, transaction.Sender, NodeId, "", 0 ) );      // add coins issued
         }
 
         private bool ResolveConflicts()
         {
             List<Block> newChain = null;
-            int maxLength = _chain.Count;
             foreach (Node node in _nodes)
             {
                 var url = new Uri(node.Address, "/chain");
@@ -145,10 +140,7 @@ namespace Blockchain.Models
                     string json = new StreamReader(response.GetResponseStream()).ReadToEnd();
                     var data = JsonConvert.DeserializeAnonymousType(json, model);
                     if (data.chain.Count > _chain.Count && IsValidChain(data.chain))
-                    {
-                        maxLength = data.chain.Count;
                         newChain = data.chain;
-                    }
                 }
             }
             if (newChain != null)
@@ -161,15 +153,13 @@ namespace Blockchain.Models
 
         private static bool IsValidChain(List<Block> chain)
         {
-            Block block = null;
-            Block lastBlock = chain.First();
             int currentIndex = 1;
             while (currentIndex < chain.Count)
             {
-                block = chain.ElementAt(currentIndex);
+                Block block = chain.ElementAt(currentIndex);
+                Block lastBlock = chain.ElementAt(currentIndex-1);
                 if (block.PreviousHash != GetHash(lastBlock)) return false;
                 if (!IsValidProof(block.Transactions, block.Nonce, lastBlock.PreviousHash)) return false;
-                lastBlock = block;
                 currentIndex++;
             }
             return true;
@@ -180,8 +170,8 @@ namespace Blockchain.Models
 
         internal Block Mine()
         {
-            int proof = CreateProofOfWork(_chain.Last().PreviousHash);
-            Block block = CreateNewBlock(proof);
+            int nonce = CreateProofOfWork(_chain.Last().PreviousHash);
+            Block block = CreateNewBlock(nonce);
             return block;
         }
 
@@ -215,7 +205,7 @@ namespace Blockchain.Models
 
         internal bool CreateTransaction(Transaction transaction)
         {
-            var verified = Verify_transaction_signature(transaction, transaction.Signature, transaction.Sender);
+            var verified = Verify_transaction_signature(transaction);
             if (!verified || transaction.Sender == transaction.Recipient) return false;
             if (!HasBalance(transaction)) return false;
             AddTransaction(transaction);

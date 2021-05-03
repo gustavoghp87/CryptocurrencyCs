@@ -6,7 +6,6 @@ namespace RSA
     {
         public static string Sign(string privKey, string msgToSign)
         {
-            var a = privKey;
             var secret = Network.Main.CreateBitcoinSecret(privKey);
             var signature = secret.PrivateKey.SignMessage(msgToSign);
             return signature;
