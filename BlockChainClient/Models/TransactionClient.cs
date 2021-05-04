@@ -5,7 +5,7 @@
         public decimal Amount { get; set; }
         public string Recipient { get; set; }
         public string Sender { get; set; }
-        public string SenderPrivKey { get; set; }   // no Signature
+        public string SenderPrivKey { get; set; }        // sender private key, no signature
         public decimal Fees { get; set; }
 
         public TransactionClient()
@@ -18,7 +18,7 @@
             Amount = amount;
             Recipient = recipient;
             Sender = sender;
-            SenderPrivKey = senderPrivKey;
+            SenderPrivKey = senderPrivKey;               // sender private key, no signature
             Fees = fees;
         }
 

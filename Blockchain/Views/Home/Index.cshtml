@@ -84,6 +84,7 @@
                 <th> Amount </th>
                 <th> Date </th>
                 <th> Block </th>
+                <th> Nonce </th>
                 <th> PrevHash </th>
             </tr>
         </thead>
@@ -101,6 +102,7 @@
                             <td> @item.Amount </td>
                             <td> @block.Timestamp </td>
                             <td> @(block.Index + 1) </td>
+                            <td> @block.Nonce </td>
                             <td> @block.PreviousHash </td>
                         </tr>
                     }

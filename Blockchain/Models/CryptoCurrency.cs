@@ -84,13 +84,12 @@ namespace Blockchain.Models
             var signatures = transactions.Select(x => x.Signature).ToArray();
             string guess = $"{signatures}{nonce}{previousHash}";
             string result = GetSha256(guess);
-            return result.StartsWith("00");
+            return result.StartsWith("00000");
         }
 
         private static bool Verify_transaction_signature(Transaction transaction)
         {
-            string originalMessage = transaction.ToString();
-            bool verified = RSA.RSA.Verify(transaction.Sender, originalMessage, transaction.Signature);
+            bool verified = RSA.RSA.Verify(transaction.Sender, transaction.ToString(), transaction.Signature);
             return verified;
         }
 
@@ -102,6 +101,11 @@ namespace Blockchain.Models
                 var ownerTransactions = block.Transactions.Where(x => x.Sender == ownerAddress || x.Recipient == ownerAddress);
                 trns.AddRange(ownerTransactions);
             }
+            //foreach (var transaction in _currentTransactions)
+            //{
+            //    if (transaction.Sender == ownerAddress || transaction.Recipient == ownerAddress)
+            //    trns.Add(transaction);
+            //}
             return trns;
         }
 
@@ -123,7 +127,7 @@ namespace Blockchain.Models
         {
             _currentTransactions.Add(transaction);
             if (transaction.Sender != NodeId && transaction.Fees > 0)
-                _currentTransactions.Add(new Transaction (transaction.Fees, transaction.Sender, NodeId, "", 0 ) );      // add coins issued
+                _currentTransactions.Add(new Transaction (transaction.Fees, transaction.Sender, NodeId, "", 0 ) );      // add every transaction's fees
         }
 
         private bool ResolveConflicts()
@@ -205,6 +209,7 @@ namespace Blockchain.Models
 
         internal bool CreateTransaction(Transaction transaction)
         {
+            if (!CheckJustOneTransactionPerTurn(transaction)) return false;                    //    just one transaction per turn
             var verified = Verify_transaction_signature(transaction);
             if (!verified || transaction.Sender == transaction.Recipient) return false;
             if (!HasBalance(transaction)) return false;
@@ -231,6 +236,16 @@ namespace Blockchain.Models
         internal Wallet GetMinersWallets()
         {
             return minerWallet;
+        }
+
+        public bool CheckJustOneTransactionPerTurn(Transaction transaction)
+        {
+            var senderDone = false;
+            foreach (var newTransaction in _currentTransactions)
+            {
+                if (newTransaction.Sender == transaction.Sender) senderDone = true;
+            }
+            return !senderDone;
         }
     }
 }

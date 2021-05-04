@@ -11,11 +11,10 @@ namespace RSA
             return signature;
         }
 
-        public static bool Verify(string pbKey, string originalMessage, string signedMessage)
+        public static bool Verify(string publicKey, string originalMessage, string signedMessage)
         {
-            var address = BitcoinAddress.Create(pbKey, Network.Main);
-            var pkh = (address as IPubkeyHashUsable);
-            var bol = pkh.VerifyMessage(originalMessage, signedMessage);
+            var address = (IPubkeyHashUsable)BitcoinAddress.Create(publicKey, Network.Main);
+            var bol = address.VerifyMessage(originalMessage, signedMessage);
             return bol;
         }
     }

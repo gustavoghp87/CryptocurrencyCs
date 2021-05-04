@@ -53,7 +53,7 @@ namespace Blockchain.Api
             return Created("", new
             {
                 message = "New nodes have been created",
-                total_nodes = nodes.Count()
+                total_nodes = nodes.Length
             });
         }
 
