@@ -7,17 +7,19 @@ namespace Blockchain.Models
     {
         public int Index { get; private set; }
         public DateTime Timestamp { get; private set; }
+        public string PreviousHash { get; private set; }
         public List<Transaction> Transactions { get; private set; }
         public int Nonce { get; private set; }
-        public string PreviousHash { get; private set; }
+        public string Hash { get; set; }
 
-        public Block(int index, DateTime timestamp, List<Transaction> transactions, int nonce, string previousHash)
+        public Block(int index, DateTime timestamp, string previousHash, List<Transaction> transactions, int nonce, string hash)
         {
             Index = index;
             Timestamp = timestamp;
+            PreviousHash = previousHash;
             Transactions = transactions;
             Nonce = nonce;
-            PreviousHash = previousHash;
+            Hash = hash;
         }
 
         public override string ToString()

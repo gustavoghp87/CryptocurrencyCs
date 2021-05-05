@@ -23,7 +23,10 @@
                             <div class="col-sm-10">
                                 <div class="input-group">
                                     <spam class="input-group-addon"> # </spam>
-                                    <input id="block1chain1number" type="text" value="@i" onkeyup="updateChain(1, 1);" class="form-control" />
+                                    <input id="block1chain1number" type="text" value="@block.Index" onkeyup="updateChain(1, 1);" class="form-control" />
+                                    <input id="block1chain1tx0time" type="text" value="@block.Timestamp" onkeyup="updateChain(1, 1);" class="form-control" />
+                                    <input id="block1chain1tx0prev" type="text" value="@block.PreviousHash" onkeyup="updateChain(1, 1);" class="form-control" />
+                                    <input id="block1chain1tx0prev" type="text" value="@block.Hash" onkeyup="updateChain(1, 1);" class="form-control" />
                                 </div>
                             </div>
                         </div>
@@ -38,14 +41,14 @@
                             <div class="col-sm-10">
                                 @foreach (var item in block.Transactions)
                                 {
-                                    <div class="input-group">
-                                        <div class="input-group-addon"> $ </div>
-                                        <input id="block1chain1tx0value" type="text" value="@item.Amount" onkeyup="updateChain(1, 1);" class="form-control" />
-                                        <div class="input-group-addon"> From: </div>
-                                        <input id="block1chain1tx0from" type="text" value="@item.Sender" />
-                                        <div class="input-group-addon"> ->: </div>
-                                        <input id="block1chain1tx0to" type="text" value="@item.Recipient" onkeyup="updateChain(1, 1);" class="form-control" />
-                                    </div>
+                                <div class="input-group">
+                                    <div class="input-group-addon"> $ </div>
+                                    <input id="block1chain1tx0value" type="text" value="@item.Amount" onkeyup="updateChain(1, 1);" class="form-control" />
+                                    <div class="input-group-addon"> From: </div>
+                                    <input id="block1chain1tx0from" type="text" value="@item.Sender" />
+                                    <div class="input-group-addon"> ->: </div>
+                                    <input id="block1chain1tx0to" type="text" value="@item.Recipient" onkeyup="updateChain(1, 1);" class="form-control" />
+                                </div>
                                     j++;
                                 }
                             </div>

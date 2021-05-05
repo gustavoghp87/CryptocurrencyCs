@@ -24,7 +24,13 @@ namespace Blockchain.Models
         {
             NodeId = "18spHKNekiGLi89nrvCYiTaxtMaLtS3cvT";           // minerWallet.PublicKey;        L3wKuKpao6RmJSz6pVzU5pZDBa3wJ3ZwhKqkGSqD85cQdCDwtK3g
             _currentTransactions.Add(new Transaction(50, "Monetary Issue", NodeId, "", 0));
-            CreateNewBlock(nonce: 100, previousHash: "1");
+            var firstBlockPrevData = new BlockPrevData(
+                0,
+                DateTime.UtcNow,
+                "null!",
+                _currentTransactions.ToList()
+            );
+            CreateNewBlock(firstBlockPrevData, 100, "satoshiHash");
         }
 
         private void RegisterNode(string address)
@@ -32,20 +38,21 @@ namespace Blockchain.Models
             _nodes.Add(new Node { Address = new Uri(address) });
         }
 
-        private Block CreateNewBlock(int nonce, string previousHash = null)
+        private Block CreateNewBlock(BlockPrevData blockPrevData, int nonce, string hash)
         {
-            // Console.WriteLine(_chain.Count.ToString(), DateTime.UtcNow, _currentTransactions.ToList(), proof, previousHash ?? GetHash(_chain.Last()));
-            var block = new Block
+            var newBlock = new Block
             (
-                _chain.Count,
-                DateTime.UtcNow,
-                _currentTransactions.ToList(),
+                blockPrevData.Index,
+                blockPrevData.Timestamp,
+                blockPrevData.PreviousHash,
+                blockPrevData.Transactions,
                 nonce,
-                previousHash ?? GetHash(_chain.Last())
+                hash
             );
             _currentTransactions.Clear();
-            _chain.Add(block);
-            return block;
+            PayReward();
+            _chain.Add(newBlock);
+            return newBlock;
         }
 
         private static string GetHash(Block block)
@@ -64,27 +71,38 @@ namespace Blockchain.Models
             return hashBuilder.ToString();
         }
 
-        private int CreateProofOfWork(string previousHash)
+        private int CreateProofOfWork(BlockPrevData blockPrevData)
         {
             int nonce = 0;
-            while (!IsValidProof(_currentTransactions, nonce, previousHash))
-                nonce++;
-            if (_blockCount==10)
+            while (!IsValidProof(_currentTransactions, nonce, blockPrevData.PreviousHash))
+                nonce++;  
+            return nonce;
+        }
+
+        private void PayReward()
+        {
+            if (_blockCount == 10)
             {
                 _blockCount = 0;
-                _reward = _reward / 2;
+                _reward /= 2;
             }
-            AddTransaction(new Transaction(_reward, "Monetary Issue Again", NodeId, "", 0));
+            AddTransaction(new Transaction(_reward, "Monetary Issue", NodeId, "", 0));                  //   add reward to next block
             _blockCount++;
-            return nonce;
         }
 
         private static bool IsValidProof(List<Transaction> transactions, int nonce, string previousHash)
         {
             var signatures = transactions.Select(x => x.Signature).ToArray();
             string guess = $"{signatures}{nonce}{previousHash}";
-            string result = GetSha256(guess);
-            return result.StartsWith("00000");
+            bool result = GetSha256(guess).StartsWith("0000");
+            return result;
+        }
+
+        private static string GetNewHash(BlockPrevData blockPrevData, int nonce)
+        {
+            var signatures = blockPrevData.Transactions.Select(x => x.Signature).ToArray();
+            string guess = $"{signatures}{nonce}{blockPrevData.PreviousHash}";
+            return GetSha256(guess);
         }
 
         private static bool Verify_transaction_signature(Transaction transaction)
@@ -174,8 +192,17 @@ namespace Blockchain.Models
 
         internal Block Mine()
         {
-            int nonce = CreateProofOfWork(_chain.Last().PreviousHash);
-            Block block = CreateNewBlock(nonce);
+            // minar: tengo un timestamp, un index, un prevHash y un transactions list
+            // le falta nonce, hash
+            var blockPrevData = new BlockPrevData(
+                _chain.Count,
+                DateTime.UtcNow,
+                _chain.Last().Hash ?? "null!",
+                _currentTransactions.ToList()
+            );
+            int nonce = CreateProofOfWork(blockPrevData);
+            string newHash = GetNewHash(blockPrevData, nonce);
+            Block block = CreateNewBlock(blockPrevData, nonce, newHash);
             return block;
         }
 
