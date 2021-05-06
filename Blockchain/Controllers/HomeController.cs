@@ -9,7 +9,7 @@ namespace Blockchain.Controllers
 {
     public class HomeController : Controller
     {
-        public CryptoCurrency _blockchain = BlockchainController.blockchain;
+        public Models.Blockchain _blockchain = BlockchainController.blockchain;
         private ILogger<HomeController> _logger;
 
         public HomeController(ILogger<HomeController> logger)

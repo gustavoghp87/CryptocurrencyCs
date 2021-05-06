@@ -10,7 +10,7 @@ namespace Blockchain.Api
     [Route("")]
     public class BlockchainController : Controller
     {
-        public static readonly CryptoCurrency blockchain = new();
+        public static readonly Models.Blockchain blockchain = new();
 
         [HttpPost("transactions/new")]
         public IActionResult New_transaction([FromBody] Transaction transaction)
