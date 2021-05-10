@@ -20,10 +20,66 @@ namespace Blockchain.Models
         public List<Block> _chain = new();
         public string NodeId { get; private set; }
 
+        private static class MonetaryIssue
+        {
+            public static string Public = "1GPuEJZ6rjh7WfdQwNqUPWgsud95RLBUfK";
+            public static string Private = "L27gRq59TSnXTWanV1SdgHRucFtfqZciec5Grooc6MDPe4o47T5V";
+        }
+
         public Blockchain()
         {
             NodeId = "18spHKNekiGLi89nrvCYiTaxtMaLtS3cvT";           // minerWallet.PublicKey;        L3wKuKpao6RmJSz6pVzU5pZDBa3wJ3ZwhKqkGSqD85cQdCDwtK3g
-            _currentTransactions.Add(new Transaction(50, "Monetary Issue", NodeId, "", 0));
+            UpdateBlockchain();
+            if (_chain.Count == 0)
+            {
+                CreateNewBlockchain();
+                Console.WriteLine("Created blockchain");
+            }
+        }
+
+        internal void UpdateBlockchain()
+        {
+            GetNodesFromServer();
+            Consensus();
+        }
+
+        private void GetNodesFromServer()
+        {
+            var url = new Uri("http://localhost:10000/nodes");
+            var request = (HttpWebRequest)WebRequest.Create(url);
+            var response = (HttpWebResponse)request.GetResponse();
+            if (response.StatusCode == HttpStatusCode.OK)
+            {
+                Console.WriteLine(response);
+                try
+                {
+                    //var model = new { nodesRetrieved = new List<Node>(), length = 0 };
+                    string json = new StreamReader(response.GetResponseStream()).ReadToEnd();
+                    var data = JsonConvert.DeserializeObject<List<string>>(json);
+                    _nodes.Clear();
+                    var newNodes = new List<Node>();
+                    foreach (var node in data)
+                    {
+                        var newNode = new Node { Address = new Uri(node.EndsWith('/') ? node.Substring(0, -1) : node) };
+                        newNodes.Add(newNode);
+                    }
+                    _nodes.AddRange(newNodes);
+                    foreach (var item in _nodes)
+                    {
+                        Console.WriteLine(item.Address);
+                    }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+            }
+        }
+
+        private void CreateNewBlockchain()
+        {
+            _currentTransactions.Add(new Transaction(50, MonetaryIssue.Public, NodeId, "", 0));
+            _blockCount++;
             var firstBlockPrevData = new BlockPrevData(
                 0,
                 DateTime.UtcNow,
@@ -64,7 +120,7 @@ namespace Blockchain.Models
                 _blockCount = 0;
                 _reward /= 2;
             }
-            AddTransaction(new Transaction(_reward, "Monetary Issue", NodeId, "", 0));                  //   add reward to next block
+            AddTransaction(new Transaction(_reward, MonetaryIssue.Public, NodeId, "", 0));                  //   add reward to next block
             _blockCount++;
         }
 
@@ -81,10 +137,22 @@ namespace Blockchain.Models
 
         private static bool IsValidProof(List<Transaction> transactions, int nonce, string previousHash)    /////////////////////////////////////////////////////////////
         {
-            var signatures = transactions.Select(x => x.Signature).ToArray();
-            string guess = $"{signatures}{nonce}{previousHash}";
+            string guess = GenerateGuess(transactions, nonce, previousHash);
+            Console.WriteLine(GetSha256(guess));
             bool result = GetSha256(guess).StartsWith("0000");
             return result;
+        }
+
+        private static string GenerateGuess(List<Transaction> transactions, int nonce, string previousHash)
+        {
+            string sign = "";
+            foreach (var transaction in transactions)
+            {
+                if (transaction.Sender != MonetaryIssue.Public)
+                    sign += transaction.Signature;
+            }
+            // var signatures = transactions.Select(x => x.Signature).ToArray();
+            return $"{sign}{nonce}{previousHash}";
         }
 
         private static string GetSha256(string data)
@@ -95,16 +163,6 @@ namespace Blockchain.Models
             foreach (byte x in hash)
                 hashBuilder.Append($"{x:x2}");
             return hashBuilder.ToString();
-        }
-
-
-
-        private static string GetNewHash(BlockPrevData blockPrevData, int nonce)
-        {
-            var signatures = blockPrevData.Transactions.Select(x => x.Signature).ToArray();
-            string guess = $"{signatures}{nonce}{blockPrevData.PreviousHash}";
-            string blockText = JsonConvert.SerializeObject(blockPrevData);
-            return GetSha256(guess);
         }
 
         private static bool Verify_transaction_signature(Transaction transaction)
@@ -154,16 +212,25 @@ namespace Blockchain.Models
             List<Block> newChain = null;
             foreach (Node node in _nodes)
             {
-                var url = new Uri(node.Address, "/chain");
-                var request = (HttpWebRequest)WebRequest.Create(url);
-                var response = (HttpWebResponse)request.GetResponse();
-                if (response.StatusCode == HttpStatusCode.OK)
+                try
                 {
-                    var model = new { chain = new List<Block>(), length = 0 };
-                    string json = new StreamReader(response.GetResponseStream()).ReadToEnd();
-                    var data = JsonConvert.DeserializeAnonymousType(json, model);
-                    if (data.chain.Count > _chain.Count && IsValidChain(data.chain))
-                        newChain = data.chain;
+                    Console.WriteLine(node.Address);
+                    var url = new Uri(node.Address + "chain");
+                    Console.WriteLine(url.ToString());
+                    var request = (HttpWebRequest)WebRequest.Create(url);
+                    var response = (HttpWebResponse)request.GetResponse();
+                    if (response.StatusCode == HttpStatusCode.OK)
+                    {
+                        var model = new { chain = new List<Block>(), length = 0 };
+                        string json = new StreamReader(response.GetResponseStream()).ReadToEnd();
+                        var data = JsonConvert.DeserializeAnonymousType(json, model);
+                        if (data.chain.Count > _chain.Count && IsValidChain(data.chain))
+                            newChain = data.chain;
+                    }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.Message);
                 }
             }
             if (newChain != null)
@@ -176,13 +243,18 @@ namespace Blockchain.Models
 
         private static bool IsValidChain(List<Block> chain)
         {
-            int currentIndex = 1;
+            int currentIndex = 3;
             while (currentIndex < chain.Count)
             {
                 Block block = chain.ElementAt(currentIndex);
-                Block lastBlock = chain.ElementAt(currentIndex-1);
+                Block lastBlock = chain.ElementAt(currentIndex - 1);
+                Console.WriteLine(block.PreviousHash);
+                Console.WriteLine(GetHash(lastBlock));
                 if (block.PreviousHash != GetHash(lastBlock)) return false;
-                if (!IsValidProof(block.Transactions, block.Nonce, lastBlock.PreviousHash)) return false;
+                Console.WriteLine(block.Nonce);
+                Console.WriteLine(lastBlock.PreviousHash);
+                Console.WriteLine(block.Transactions);
+                if (!IsValidProof(block.Transactions, block.Nonce, block.PreviousHash)) return false;
                 currentIndex++;
             }
             return true;
@@ -190,8 +262,11 @@ namespace Blockchain.Models
 
         private static string GetHash(Block block)
         {
-            string blockText = JsonConvert.SerializeObject(block);     //////////////////////////////////////////////////////////////////////
-            return GetSha256(blockText);
+            // string blockText = JsonConvert.SerializeObject(block);     //////////////////////////////////////////////////////////////////////
+            //var signatures = block.Transactions.Select(x => x.Signature).ToArray();
+            string guess = GenerateGuess(block.Transactions, block.Nonce, block.PreviousHash);
+            // string blockText = JsonConvert.SerializeObject(blockPrevData);
+            return GetSha256(guess);
         }
 
 
@@ -211,7 +286,8 @@ namespace Blockchain.Models
                 _currentTransactions.ToList()
             );
             int nonce = CreateProofOfWork(blockPrevData);
-            string newHash = GetNewHash(blockPrevData, nonce);
+            string guess = GenerateGuess(blockPrevData.Transactions, nonce, blockPrevData.PreviousHash);
+            string newHash = GetSha256(guess);
             Block block = CreateNewBlock(blockPrevData, nonce, newHash);
             return block;
         }
