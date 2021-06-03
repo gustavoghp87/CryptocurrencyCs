@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Blockchain
+namespace BlockchainAPI
 {
     public class Program
     {

@@ -35,7 +35,7 @@ namespace BlockChainClient.Controllers
 
         public IActionResult WalletTransactions()
         {
-            return View(new List<Blockchain.Models.Transaction>());
+            return View(new List<BlockchainAPI.Models.Transaction>());
         }
 
         [HttpPost]
@@ -48,7 +48,7 @@ namespace BlockChainClient.Controllers
         }
 
 
-        private static List<Blockchain.Models.Block> GetChain(Uri url)
+        private static List<BlockchainAPI.Models.Block> GetChain(Uri url)
         {
             var request = (HttpWebRequest)WebRequest.Create(url);
             var response = (HttpWebResponse)request.GetResponse();
@@ -56,7 +56,7 @@ namespace BlockChainClient.Controllers
             {
                 var model = new
                 {
-                    chain = new List<Blockchain.Models.Block>(),
+                    chain = new List<BlockchainAPI.Models.Block>(),
                     length = 0
                 };
                 string json = new StreamReader(response.GetResponseStream()).ReadToEnd();
@@ -66,9 +66,9 @@ namespace BlockChainClient.Controllers
             return null;
         }
 
-        private static List<Blockchain.Models.Transaction> TransactionByAddress(string ownerAddress, List<Blockchain.Models.Block> chain)
+        private static List<BlockchainAPI.Models.Transaction> TransactionByAddress(string ownerAddress, List<BlockchainAPI.Models.Block> chain)
         {
-            List<Blockchain.Models.Transaction> trns = new();
+            List<BlockchainAPI.Models.Transaction> trns = new();
             foreach (var block in chain.OrderByDescending(x => x.Index))
             {
                 var ownerTransactions = block.Transactions.Where(x => x.Sender == ownerAddress || x.Recipient == ownerAddress);

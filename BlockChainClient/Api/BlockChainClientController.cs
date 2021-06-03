@@ -1,6 +1,6 @@
 ﻿using BlockchainClient.Models;
 using Microsoft.AspNetCore.Mvc;
-using RSA;
+using BlockchainAPI;
 
 namespace BlockChainClient.Api
 {
@@ -25,7 +25,7 @@ namespace BlockChainClient.Api
         {
             if (transaction.Amount <= 0 || transaction.Sender == null || transaction.Recipient == null || transaction.SenderPrivKey == null) return NotFound();
             if (transaction.Fees !>= 0) transaction.Fees = 0;
-            var sign = RSA.RSA.Sign(transaction.SenderPrivKey, transaction.ToString());
+            var sign = BlockchainAPI.WalletService.Sign(transaction.SenderPrivKey, transaction.ToString());
             return Ok(new
             {
                 transaction,
