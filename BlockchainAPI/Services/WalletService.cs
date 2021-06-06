@@ -3,7 +3,7 @@ using NBitcoin;
 
 namespace BlockchainAPI.Services
 {
-    public class WalletService
+    public static class WalletService
     {
         public static Wallet Generate()
         {
@@ -14,18 +14,16 @@ namespace BlockchainAPI.Services
             newWallet.BitcoinAddress = BitcoinAddress.Create(newWallet.PublicKey, Network.Main).ToString();
             return newWallet;
         }
-
-        public static string Sign(string privKey, string msgToSign)
+        public static string SignMessage(Models.Transaction transaction, string privateKey)
         {
-            var secret = Network.Main.CreateBitcoinSecret(privKey);
-            var signature = secret.PrivateKey.SignMessage(msgToSign);
+            var secret = Network.Main.CreateBitcoinSecret(privateKey);
+            var signature = secret.PrivateKey.SignMessage(transaction.Message);
             return signature;
         }
-
-        public static bool VerifyTransaction(Models.Transaction transaction)
+        public static bool VerifyMessage(Models.Transaction transaction)
         {
             string senderPublicKey = transaction.Sender;
-            string originalMessage = transaction.Recipient;
+            string originalMessage = transaction.Message;
             string signedMessage = transaction.Signature;
             IPubkeyHashUsable address = (IPubkeyHashUsable)BitcoinAddress.Create(senderPublicKey, Network.Main);
             bool result = address.VerifyMessage(originalMessage, signedMessage);

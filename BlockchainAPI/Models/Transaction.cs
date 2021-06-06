@@ -7,5 +7,6 @@
         public string Recipient { get; set; }
         public string Signature { get; set; }
         public decimal Fees { get; set; }
+        public string Message { get; set; }
     }
 }

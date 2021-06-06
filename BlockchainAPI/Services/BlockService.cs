@@ -9,15 +9,15 @@ namespace BlockchainAPI.Services
         {
             _block = new();
         }
-        public override string ToString()
-        {
-            return $"{_block.Index} [{_block.Timestamp:yyyy-MM-dd HH:mm:ss}] " +
-                   $"Nonce: {_block.Nonce} | PrevHash: {_block.PreviousHash}";
-        }
         public void Create(Block block, int difficulty, string monetaryIssuePublicKey)
         {
             _block = block;
             Mine(difficulty, monetaryIssuePublicKey);
+        }
+        private string GenerateMessage()
+        {
+            return $"{_block.Index} [{_block.Timestamp:yyyy-MM-dd HH:mm:ss}] " +
+                   $"Nonce: {_block.Nonce} | PrevHash: {_block.PreviousHash}";
         }
         private void Mine(int difficulty, string monetaryIssuePublicKey)
         {
