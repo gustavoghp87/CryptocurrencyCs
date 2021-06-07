@@ -9,7 +9,9 @@ namespace BlockchainAPI.Services.Transactions
             return transaction.Timestamp.ToString() + "-"
                  + transaction.Sender + "-"
                  + transaction.Amount.ToString("0.00000000") + "-"
-                 + transaction.Recipient;
+                 + transaction.Recipient + "-"
+                 + transaction.Miner + "-"
+                 + transaction.Fees;
         }
     }
 }

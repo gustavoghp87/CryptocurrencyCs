@@ -10,36 +10,36 @@ namespace BlockchainAPI.Services
 {
     public class BlockchainService
     {
-        public static Blockchain _blockchain;
+        public static Blockchain Blockchain;
         public readonly Wallet _minerWallet;
         public BlockchainService()
         {
             _minerWallet = MinerService.minerWallet;
-            _blockchain = new();
+            Blockchain = new();
             Initialize();
         }
         private void Initialize()
         {
-            _blockchain.MonetaryIssueWallet = MonetaryIssueService.Get();
-            _blockchain.Reward = 50;
-            _blockchain.Difficulty = 4;
-            _blockchain.Nodes = new List<Node>();
-            _blockchain.Blocks = new List<Block>();
+            Blockchain.MonetaryIssueWallet = MonetaryIssueService.Get();
+            Blockchain.Reward = 50;
+            Blockchain.Difficulty = 4;
+            Blockchain.Nodes = new List<Node>();
+            Blockchain.Blocks = new List<Block>();
             GetFromNet();
-            if (_blockchain.Blocks == null || _blockchain.Blocks.Count == 0) Create();
+            if (Blockchain.Blocks == null || Blockchain.Blocks.Count == 0) Create();
         }
         private void GetFromNet()
         {
             NodeService nodeService = new();
-            _blockchain.Nodes = nodeService.GetAllFromServer();
-            if (_blockchain.Nodes == null) return;
+            Blockchain.Nodes = nodeService.GetAllFromServer();
+            if (Blockchain.Nodes == null) return;
             List<Blockchain> lstBlockchains = RequestFromNet();
             GetLargest(lstBlockchains);
         }
         private List<Blockchain> RequestFromNet()
         {
             List<Blockchain> lstBlockchains = new();
-            foreach (Node node in _blockchain.Nodes)
+            foreach (Node node in Blockchain.Nodes)
             {
                 try
                 {
@@ -75,7 +75,7 @@ namespace BlockchainAPI.Services
                 if (blockchain.Blocks.Count > newBlockchain.Blocks.Count && IsValid(blockchain))
                     newBlockchain = blockchain;
             }
-            if (newBlockchain != null) _blockchain = newBlockchain;
+            if (newBlockchain != null) Blockchain = newBlockchain;
         }
         private bool IsValid(Blockchain blockchain)
         {
@@ -86,7 +86,7 @@ namespace BlockchainAPI.Services
             if (block2.PreviousHash != "satoshiHash") return false;
             if (block2.Hash != "satoshiHash") return false;
             if (!ProofOfWorkService.IsValid(block2, blockchain.Difficulty,
-                                                     _blockchain.MonetaryIssueWallet.PublicKey)) return false;
+                                                     Blockchain.MonetaryIssueWallet.PublicKey)) return false;
             int i = 3;
             while (i < blockchain.Blocks.Count)
             {
@@ -94,11 +94,11 @@ namespace BlockchainAPI.Services
                 {
                     Block block = blockchain.Blocks.ElementAt(i);
                     Block lastBlock = blockchain.Blocks.ElementAt(i - 1);
-                    ProofOfWorkService powService = new(lastBlock, _blockchain.Difficulty,
-                        _blockchain.MonetaryIssueWallet.PublicKey);
+                    ProofOfWorkService powService = new(lastBlock, Blockchain.Difficulty,
+                        Blockchain.MonetaryIssueWallet.PublicKey);
                     if (block.PreviousHash != powService.GetHash()) return false;
                     if (!ProofOfWorkService.IsValid(block, blockchain.Difficulty,
-                                                      _blockchain.MonetaryIssueWallet.PublicKey)) return false;
+                                                      Blockchain.MonetaryIssueWallet.PublicKey)) return false;
                 }
                 i++;
             }
@@ -106,25 +106,37 @@ namespace BlockchainAPI.Services
         }
         private void Create()
         {
-            Transaction firstTransaction = new()    // use service
+            Transaction transaction = new()
             {
                 Amount = 50,
-                Sender = _blockchain.MonetaryIssueWallet.PublicKey,
+                Sender = MonetaryIssueService.Get().PublicKey,
                 Recipient = _minerWallet.PublicKey,
-                Signature = ""
+                Fees = 0,
+                Miner = _minerWallet.PublicKey,
+                Timestamp = DateTime.UtcNow
             };
-            SignTransactionService signTService = new(firstTransaction, _blockchain.MonetaryIssueWallet.PrivateKey);
-            firstTransaction.Message = signTService.GetMessage();
-            firstTransaction.Signature = signTService.GetSignature();
-            List<Transaction> lstTransactions = new();
-            lstTransactions.Add(firstTransaction);
-
-            BlockService blockServ = new(0, "null!", lstTransactions, _blockchain.Difficulty, _blockchain.MonetaryIssueWallet.PublicKey);
-            _blockchain.Blocks.Add(blockServ.GetBlock());
+            SignTransactionService signServ = new(transaction, _minerWallet.PrivateKey);
+            TransactionRequest transactionReq = new()
+            {
+                Amount = 50,
+                Sender = MonetaryIssueService.Get().PublicKey,
+                Recipient = _minerWallet.PublicKey,
+                Fees = 0,
+                Miner = _minerWallet.PublicKey,
+                Timestamp = DateTime.UtcNow,
+                Message = signServ.GetMessage(),
+                Signature = signServ.GetSignature()
+            };
+            TransactionService transactionServ = new();
+            transactionServ.Add(transactionReq);
+            List<Transaction> lstTransactions = transactionServ.Get();
+            BlockService blockServ = new(0, "null!", lstTransactions, Blockchain.Difficulty,
+                MonetaryIssueService.Get().PublicKey);
+            Blockchain.Blocks.Add(blockServ.GetBlock());
         }
         public Blockchain Get()
         {
-            return _blockchain;
+            return Blockchain;
         }
 
         public void Mine()

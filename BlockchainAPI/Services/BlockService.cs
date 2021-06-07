@@ -11,9 +11,9 @@ namespace BlockchainAPI.Services
         {
             _block = new();
             _block.Index = index;
-            _block.Timestamp = DateTime.UtcNow;
             _block.PreviousHash = previousHash;
             _block.Transactions = lstTransactions;
+            _block.Timestamp = DateTime.UtcNow;
             _block.Nonce = 0;
             _block.Hash = "";
             Mine(difficulty, monetaryIssuePublicKey);
