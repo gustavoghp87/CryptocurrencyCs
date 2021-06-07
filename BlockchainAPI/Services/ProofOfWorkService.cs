@@ -8,12 +8,13 @@ namespace BlockchainAPI.Services
     {
         private int _nonce;
         private string _hash;
-        public ProofOfWorkService()
+        public ProofOfWorkService(Block block, int difficulty, string monetaryIssuePublic)
         {
             _nonce = new int();
             _hash = "";
+            Create(block, difficulty, monetaryIssuePublic);
         }
-        public void Create(Block block, int difficulty, string monetaryIssuePublic)
+        private void Create(Block block, int difficulty, string monetaryIssuePublic)
         {
             block.Nonce = 0;
             int nonce = 0;
@@ -22,24 +23,22 @@ namespace BlockchainAPI.Services
             _nonce = nonce;
             _hash = GetHash(block, monetaryIssuePublic);
         }
-
-        public static bool IsValid(Block block, int difficulty, string monetaryIssuePublic)
+        public static bool IsValid(Block block, int difficulty, string monetaryIssuePublic)    // public
         {
             string hash = GetHash(block, monetaryIssuePublic);
             string startsWith = "";
-            for (int i = 1; i <= difficulty-3; i++)
+            for (int i = 1; i <= difficulty-2; i++)
             {
                 startsWith += "0";
             }
             bool result = hash.StartsWith(startsWith);
             return result;
         }
-
-        public static string GetHash(Block block, string monetaryIssuePublic)
+        private static string GetHash(Block block, string monetaryIssuePublic)
         {
             // string blockText = JsonConvert.SerializeObject(block);
             //var signatures = block.Transactions.Select(x => x.Signature).ToArray();
-            string guess = GenerateGuess(block, monetaryIssuePublic);
+            string guess = GenerateMessage(block, monetaryIssuePublic);
             // string blockText = JsonConvert.SerializeObject(blockPrevData);
             byte[] bytes = Encoding.Unicode.GetBytes(guess);
             byte[] hash = new SHA256Managed().ComputeHash(bytes);
@@ -48,8 +47,7 @@ namespace BlockchainAPI.Services
                 hashBuilder.Append($"{x:x2}");
             return hashBuilder.ToString();
         }
-
-        private static string GenerateGuess(Block block, string monetaryIssuePublic)
+        private static string GenerateMessage(Block block, string monetaryIssuePublic)
         {
             string sign = "";
             foreach (var transaction in block.Transactions)
@@ -60,7 +58,6 @@ namespace BlockchainAPI.Services
             // var signatures = transactions.Select(x => x.Signature).ToArray();
             return $"{sign}{block.Nonce}{block.PreviousHash}";
         }
-
         public int GetNonce()
         {
             return _nonce;

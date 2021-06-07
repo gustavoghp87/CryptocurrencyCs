@@ -94,8 +94,9 @@ namespace BlockchainAPI.Services
                 {
                     Block block = blockchain.Blocks.ElementAt(i);
                     Block lastBlock = blockchain.Blocks.ElementAt(i - 1);
-                    if (block.PreviousHash != ProofOfWorkService.GetHash(lastBlock,
-                                                      _blockchain.MonetaryIssueWallet.PublicKey)) return false;
+                    ProofOfWorkService powService = new(lastBlock, _blockchain.Difficulty,
+                        _blockchain.MonetaryIssueWallet.PublicKey);
+                    if (block.PreviousHash != powService.GetHash()) return false;
                     if (!ProofOfWorkService.IsValid(block, blockchain.Difficulty,
                                                       _blockchain.MonetaryIssueWallet.PublicKey)) return false;
                 }
@@ -110,27 +111,25 @@ namespace BlockchainAPI.Services
                 Amount = 50,
                 Sender = _blockchain.MonetaryIssueWallet.PublicKey,
                 Recipient = _minerWallet.PublicKey,
-                Signature = "",
-                Fees = 0
+                Signature = ""
             };
+            SignTransactionService signTService = new(firstTransaction, _blockchain.MonetaryIssueWallet.PrivateKey);
+            firstTransaction.Message = signTService.GetMessage();
+            firstTransaction.Signature = signTService.GetSignature();
             List<Transaction> lstTransactions = new();
             lstTransactions.Add(firstTransaction);
-            Block firstBlock = new()
-            {
-                Index = 0,
-                Timestamp = DateTime.UtcNow,
-                PreviousHash = "null!",
-                Transactions = lstTransactions,
-                Nonce = new int(),
-                Hash = ""
-            };
-            BlockService blockServ = new();
-            blockServ.Create(firstBlock, _blockchain.Difficulty, _blockchain.MonetaryIssueWallet.PublicKey);
+
+            BlockService blockServ = new(0, "null!", lstTransactions, _blockchain.Difficulty, _blockchain.MonetaryIssueWallet.PublicKey);
             _blockchain.Blocks.Add(blockServ.GetBlock());
         }
         public Blockchain Get()
         {
             return _blockchain;
+        }
+
+        public void Mine()
+        {
+
         }
 
         // es la hora, crear block nuevo con lstTransactions e insertarlo en la blockchain
