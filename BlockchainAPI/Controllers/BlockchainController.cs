@@ -1,5 +1,6 @@
 ﻿using BlockchainAPI.Models;
 using BlockchainAPI.Services;
+using BlockchainAPI.Services.Blockchains;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
@@ -10,22 +11,28 @@ namespace BlockchainAPI.Api
     [ApiController]
     //[EnableCors("MyPolicy")]
     //[Produces("application/json")]
-    [Route("api/")]
+    [Route("/")]
     public class BlockchainController : ControllerBase
     {
         private Blockchain _blockchain;
+        private BlockchainService _blockchainServ;
 
         public BlockchainController()
         {
-            _blockchain = new Blockchain();
+            _blockchainServ = new();
         }
 
-        [HttpGet("blockchain")]
+        [HttpGet()]
         public IActionResult Get()
         {
-            BlockchainService blockchainServ = new();
-            _blockchain = blockchainServ.Get();
-            return Ok(_blockchain);
+            return Ok(_blockchainServ.Get());
+        }
+
+        [HttpGet("/mine")]
+        public IActionResult Mine()
+        {
+            _blockchainServ.Mine();
+            return Ok(_blockchainServ.Get());
         }
 
         //[HttpPost("transactions/new")]

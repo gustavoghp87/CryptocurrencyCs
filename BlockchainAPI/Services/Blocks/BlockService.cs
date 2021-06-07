@@ -2,25 +2,26 @@
 using System;
 using System.Collections.Generic;
 
-namespace BlockchainAPI.Services
+namespace BlockchainAPI.Services.Blocks
 {
     public class BlockService
     {
         private Block _block;
-        public BlockService(int index, string previousHash, List<Transaction> lstTransactions, int difficulty, string monetaryIssuePublicKey)
+        public BlockService(int index, string previousHash, List<Transaction> lstTransactions, int difficulty)
         {
             _block = new();
             _block.Index = index;
+            _block.Difficulty = difficulty;
             _block.PreviousHash = previousHash;
             _block.Transactions = lstTransactions;
             _block.Timestamp = DateTime.UtcNow;
             _block.Nonce = 0;
             _block.Hash = "";
-            Mine(difficulty, monetaryIssuePublicKey);
+            Mine();
         }
-        private void Mine(int difficulty, string monetaryIssuePublicKey)
+        private void Mine()
         {
-            ProofOfWorkService proofServ = new(_block, difficulty, monetaryIssuePublicKey);
+            ProofOfWorkService proofServ = new(_block);
             _block.Nonce = proofServ.GetNonce();
             _block.Hash = proofServ.GetHash();
         }
@@ -29,7 +30,7 @@ namespace BlockchainAPI.Services
             return $"{_block.Index} [{_block.Timestamp:yyyy-MM-dd HH:mm:ss}] " +
                    $"Nonce: {_block.Nonce} | PrevHash: {_block.PreviousHash}";
         }
-        public Block GetBlock()
+        public Block GetMined()
         {
             return _block;
         }

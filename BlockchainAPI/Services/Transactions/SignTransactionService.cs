@@ -1,7 +1,6 @@
 ﻿using BlockchainAPI.Models;
-using BlockchainAPI.Services.Transactions;
 
-namespace BlockchainAPI.Services
+namespace BlockchainAPI.Services.Transactions
 {
     public class SignTransactionService
     {

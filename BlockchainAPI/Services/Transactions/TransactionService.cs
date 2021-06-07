@@ -1,9 +1,10 @@
 ﻿using BlockchainAPI.Models;
-using BlockchainAPI.Services.Transactions;
+using BlockchainAPI.Services.Blockchains;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace BlockchainAPI.Services
+namespace BlockchainAPI.Services.Transactions
 {
     public class TransactionService
     {
@@ -29,7 +30,7 @@ namespace BlockchainAPI.Services
         {
             _transaction.Amount = transactionReq.Amount;
             _transaction.Fees = transactionReq.Fees;
-            _transaction.Miner = MinerService.minerWallet.PublicKey;
+            _transaction.Miner = MinerService.Get().PublicKey;
             _transaction.Recipient = transactionReq.Recipient;
             _transaction.Sender = transactionReq.Sender;
             _transaction.Signature = transactionReq.Signature;
@@ -79,7 +80,7 @@ namespace BlockchainAPI.Services
         {
             string senderAddress = _transaction.Sender;
             List<Transaction> lstTransactions = new();
-            Blockchain blockchain = BlockchainService.Blockchain;
+            Blockchain blockchain = BlockchainService.G;
             List<Block> lstBlocks = (from x in blockchain.Blocks select x).ToList();
             foreach (var block in lstBlocks.OrderByDescending(x => x.Index))
             {
@@ -97,7 +98,7 @@ namespace BlockchainAPI.Services
             lstTransactions.Add(_transaction);
             return lstTransactions;
         }
-        public List<Transaction> Get()
+        public List<Transaction> GetAll()
         {
             return _lstTransactions;
         }

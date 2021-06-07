@@ -6,7 +6,7 @@ using System.IO;
 using System.Net;
 using System.Net.Http;
 
-namespace BlockchainAPI.Services
+namespace BlockchainAPI.Services.Nodes
 {
     public class NodeService
     {
@@ -15,9 +15,10 @@ namespace BlockchainAPI.Services
         public NodeService()
         {
             _lstNodes = new();
-            _centralServerUrl = new CentralServerConnection().GetUri();
+            _centralServerUrl = CentralServerConnection.GetUri();
+            GetAllFromServer();
         }
-        public List<Node> GetAllFromServer()
+        private List<Node> GetAllFromServer()
         {
             try
             {
@@ -42,7 +43,6 @@ namespace BlockchainAPI.Services
                         Console.WriteLine("Connected Nodes: " + item.Address);
                     }
                 }
-                Register();
                 return _lstNodes;
             }
             catch (Exception e)
@@ -51,12 +51,15 @@ namespace BlockchainAPI.Services
                 return null;
             }
         }
-        private void Register()
+        public List<Node> GetAll()
         {
-            foreach (Node node in _lstNodes)
-            {
-                new HttpClient().GetAsync(node.ToString());
-            }
+            return _lstNodes;
+        }
+
+
+        public void RegisterMe()
+        {
+            RegisterMeService.Send(_lstNodes);
         }
         public bool RegisterOne(string address)
         {
@@ -67,11 +70,11 @@ namespace BlockchainAPI.Services
             _lstNodes.Add(newNode);
             return CheckNew(newNode);
         }
-
         private bool CheckNew(Node newNode)
         {
             try
             {
+                Console.WriteLine(newNode);
                 // post request
                 return true;
             }
