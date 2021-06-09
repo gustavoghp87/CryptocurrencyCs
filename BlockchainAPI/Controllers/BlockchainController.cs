@@ -73,7 +73,15 @@ namespace BlockchainAPI.Api
             return Ok(_blockchain);
         }
 
-
+        [HttpGet("/balance/{publicKey}")]
+        public async Task<IActionResult> GetBalance(string publicKey)
+        {
+            UpdateBlockchain();
+            if (publicKey == "") return BadRequest();
+            List<Transaction> lstCurrentTransactions = _blockchainServ.GetTransactionService().GetAll();
+            decimal balance = await BalanceService.Get(publicKey, lstCurrentTransactions, _blockchain);
+            return Ok(balance);
+        }
 
 
 

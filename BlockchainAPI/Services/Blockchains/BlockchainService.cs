@@ -102,8 +102,8 @@ namespace BlockchainAPI.Services.Blockchains
         {
             Transaction transaction = new()
             {
-                Amount = GetReward(),
-                Fees = 0,
+                Amount = 0,
+                Fees = GetReward(),
                 Miner = MinerService.Get().PublicKey,
                 Recipient = MinerService.Get().PublicKey,
                 Sender = MonetaryIssueService.Get().PublicKey,
