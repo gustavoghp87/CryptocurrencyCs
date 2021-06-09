@@ -1,39 +1,83 @@
 ﻿using BlockchainAPI.Models;
 using BlockchainAPI.Services;
 using BlockchainAPI.Services.Blockchains;
+using BlockchainAPI.Services.Transactions;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace BlockchainAPI.Api
 {
     [ApiController]
     //[EnableCors("MyPolicy")]
-    //[Produces("application/json")]
+    [Produces("application/json")]
     [Route("/")]
     public class BlockchainController : ControllerBase
     {
         private Blockchain _blockchain;
-        private BlockchainService _blockchainServ;
+        private IBlockchainService _blockchainServ;
 
-        public BlockchainController()
+        public BlockchainController(IBlockchainService blockchainService)
         {
-            _blockchainServ = new();
+            _blockchainServ = blockchainService;
+            _blockchain = new();
+            _blockchain = _blockchainServ.Get();
+        }
+        private void UpdateBlockchain()
+        {
+            _blockchain = _blockchainServ.Get();
         }
 
         [HttpGet()]
-        public IActionResult Get()
+        public IActionResult GetBlockchain()
         {
-            return Ok(_blockchainServ.Get());
+            UpdateBlockchain();
+            return Ok(_blockchain);
+        }
+
+        [HttpGet("/transaction")]
+        public IActionResult GetTransactions()
+        {
+            List<Transaction> lstTransactions = _blockchainServ.GetTransactionService().GetAll();
+            return Ok(lstTransactions);
+        }
+
+        [HttpPost("/transaction")]
+        public async Task<IActionResult> AddTransaction(Transaction transactionRequest)
+        {
+            bool response = await _blockchainServ.GetTransactionService().Add(transactionRequest);
+            if (!response) return BadRequest();
+            UpdateBlockchain();
+            return Ok(transactionRequest);
+        }
+
+        [HttpPost("/signature")]
+        public IActionResult Sign(Transaction transactionRequest, string privateKey)
+        {
+            if (privateKey == null | privateKey == "") return BadRequest();
+            var serv = new SignTransactionService(transactionRequest, privateKey);
+            transactionRequest.Message = serv.GetMessage();
+            transactionRequest.Signature = serv.GetSignature();
+            return Ok(transactionRequest);
         }
 
         [HttpGet("/mine")]
-        public IActionResult Mine()
+        public async Task<IActionResult> Mine()
         {
-            _blockchainServ.Mine();
-            return Ok(_blockchainServ.Get());
+            bool response = await _blockchainServ.Mine();
+            if (!response) return BadRequest();
+            UpdateBlockchain();
+            return Ok(_blockchain);
         }
+
+
+
+
+
+
 
         //[HttpPost("transactions/new")]
         //public IActionResult New_transaction([FromBody] Transaction transaction)

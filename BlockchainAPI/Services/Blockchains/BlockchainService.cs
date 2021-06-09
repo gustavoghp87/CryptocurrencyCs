@@ -5,113 +5,119 @@ using BlockchainAPI.Services.Transactions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace BlockchainAPI.Services.Blockchains
 {
-    public class BlockchainService
+    public class BlockchainService : IBlockchainService
     {
-        private static Blockchain _blockchain;
+        private Blockchain _blockchain;
         private readonly Wallet _minerWallet;
+        private readonly NodeService _nodeServ;
+        private readonly TransactionService _transactionServ;
         private List<Node> _lstNodes;
-        private NodeService _nodeServ;
-        private TransactionService _transactionServ;
         public BlockchainService()
         {
             _nodeServ = new();
             _transactionServ = new();
-            _minerWallet = MinerService.Get;
-
             _blockchain = new();
-            _lstNodes = _nodeServ.GetAll();
-            _nodeServ.RegisterMe();
-            _blockchain.Nodes = _lstNodes;
+            //_blockchain.MonetaryIssueWallet = new();
+            _blockchain.MonetaryIssueWallet = MonetaryIssueService.Get();
+            _minerWallet = MinerService.Get();
             Initialize();
         }
-        private void Initialize()
+        private async void Initialize()
         {
-            _blockchain = new GetBlockchainsFromNetService().GetLargest();
-            // RegisterMyNode ...
-            if (_blockchain == null || _blockchain.Blocks == null || _blockchain.Blocks.Count == 0) Create();
-        }
-        private void Create()
-        {
-            _blockchain.MonetaryIssueWallet = MonetaryIssueService.Get();
-            _blockchain.Reward = 50;
-            _blockchain.Difficulty = 4;
-            _blockchain.Nodes = new List<Node>();
-            _blockchain.Blocks = new List<Block>();
-            Transaction transaction = new()
+            _lstNodes = _nodeServ.GetAll();
+            _blockchain.Nodes = new();
+            _blockchain.Nodes = _lstNodes;
+            _nodeServ.RegisterMe();
+            Blockchain largestBC = new GetBlockchainsFromNetService().GetLargest();
+            if (largestBC != null && largestBC.Blocks != null && largestBC.Blocks.Count != 0)
             {
-                Amount = 50,
-                Sender = MonetaryIssueService.Get().PublicKey,
-                Recipient = _minerWallet.PublicKey,
-                Fees = 0,
-                Miner = _minerWallet.PublicKey,
-                Timestamp = DateTime.UtcNow
-            };
-            SignTransactionService signServ = new(transaction, MonetaryIssueService.Get().PrivateKey);
-            TransactionRequest transactionReq = new()
+                _blockchain = largestBC;
+            }
+            else
             {
-                Amount = transaction.Amount,
-                Sender = transaction.Sender,
-                Recipient = transaction.Recipient,
-                Fees = transaction.Fees,
-                Miner = transaction.Miner,
-                Timestamp = transaction.Timestamp,
-                Message = signServ.GetMessage(),
-                Signature = signServ.GetSignature()
-            };
-            TransactionService transactionServ = new();
-            transactionServ.Add(transactionReq);
-            List<Transaction> lstTransactions = transactionServ.GetAll();
-            BlockService blockServ = new(0, "null!", lstTransactions, _blockchain.Difficulty);
-            _blockchain.Blocks.Add(blockServ.GetMined());
+                _blockchain.Blocks = new();
+                _blockchain.Difficulty = new();
+                await Mine();
+            }
         }
-
-
 
         public Blockchain Get()
         {
             return _blockchain;
         }
-
-        public void Mine()
+        public TransactionService GetTransactionService()
         {
-            PayMeReward();
+            return _transactionServ;
+        }
+        public async Task<bool> Mine()
+        {
+            bool response = await PayMeReward();
+            if (!response) return false;
             List<Transaction> lstTransactions = _transactionServ.GetAll();
-            Block lastBlock = _blockchain.Blocks.Last();
-            Block newBlock = new BlockService(
-                lastBlock.Index + 1,
-                lastBlock.PreviousHash,
+            Block lastBlock;
+            Block newBlock;
+            int newDifficulty = new NewDifficulty().Get();
+
+            if (_blockchain.Blocks.Count != 0)
+            {
+                lastBlock = _blockchain.Blocks.Last();
+                newBlock = new BlockService(
+                    lastBlock.Index + 1,
+                    lastBlock.Hash,
+                    lstTransactions,
+                    newDifficulty)
+                    .GetMined();
+            }
+            else
+            {
+                newBlock = new BlockService(
+                1,
+                "null!",
                 lstTransactions,
-                _blockchain.Difficulty)
+                newDifficulty)
                 .GetMined();
+            }
+            foreach (Block block in _blockchain.Blocks)
+            {
+                if (newBlock.Index == block.Index) return false;
+            };
             _blockchain.Blocks.Add(newBlock);
-            if (newBlock != null) SendToNodes();
-            _nodeServ.UpdateList();
+            _blockchain.Difficulty = newDifficulty;
+            
+            
+            // if (newBlock != null) SendToNodes();
+            //_nodeServ.UpdateList();
+            _transactionServ.Clear();
+            return true;
         }
         private void SendToNodes()
         {
             SendToNodesService.Send(_lstNodes, _blockchain);
         }
-
-        private void PayMeReward()
+        private async Task<bool> PayMeReward()
         {
-            TransactionRequest tReq = new()
+            Transaction transaction = new()
             {
                 Amount = GetReward(),
                 Fees = 0,
-                Sender = MonetaryIssueService.Get().PublicKey,
+                Miner = MinerService.Get().PublicKey,
                 Recipient = MinerService.Get().PublicKey,
+                Sender = MonetaryIssueService.Get().PublicKey,
                 Timestamp = DateTime.UtcNow
             };
-            _transactionServ.Add(tReq);
+            SignTransactionService signServ = new(transaction, MonetaryIssueService.Get().PrivateKey);
+            transaction.Message = signServ.GetMessage();
+            transaction.Signature = signServ.GetSignature();
+            return await _transactionServ.Add(transaction);
         }
-
         private int GetReward()                 // reducir Reward a la mitad cada 100 bloques
         {
             int reward = 50;
-            int auxiliar = _blockchain.Blocks.Count;
+            int auxiliar = _blockchain.Blocks != null ? _blockchain.Blocks.Count : 0;
             while (auxiliar / 100 > 1)
             {
                 auxiliar /= 100;

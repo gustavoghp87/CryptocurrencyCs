@@ -11,9 +11,11 @@ namespace BlockchainAPI.Services.Blocks
         {
             _block = new();
             _block.Index = index;
+            _block.Difficulty = new();
             _block.Difficulty = difficulty;
             _block.PreviousHash = previousHash;
-            _block.Transactions = lstTransactions;
+            _block.Transactions = new();
+            _block.Transactions.AddRange(lstTransactions);
             _block.Timestamp = DateTime.UtcNow;
             _block.Nonce = 0;
             _block.Hash = "";

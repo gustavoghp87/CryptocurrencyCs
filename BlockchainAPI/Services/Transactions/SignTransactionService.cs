@@ -12,7 +12,7 @@ namespace BlockchainAPI.Services.Transactions
         }
         private void Sign(string privateKey)
         {
-            _transaction.Message = TransactionMessageService.GenerateMessage(_transaction);
+            _transaction.Message = TransactionMessageService.Generate(_transaction);
             _transaction.Signature = WalletService.SignMessage(_transaction, privateKey);
         }
         public string GetMessage()

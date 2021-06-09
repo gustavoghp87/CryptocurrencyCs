@@ -10,7 +10,7 @@ namespace BlockchainAPI.Services.Blocks
         {
             string hash = GetHash(block);
             string startsWith = "";
-            for (int i = 1; i <= block.Difficulty - 2; i++)
+            for (int i = 1; i <= block.Difficulty; i++)
             {
                 startsWith += "0";
             }

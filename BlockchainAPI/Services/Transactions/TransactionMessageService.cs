@@ -4,7 +4,7 @@ namespace BlockchainAPI.Services.Transactions
 {
     public static class TransactionMessageService
     {
-        public static string GenerateMessage(Transaction transaction)
+        public static string Generate(Transaction transaction)
         {
             return transaction.Timestamp.ToString() + "-"
                  + transaction.Sender + "-"

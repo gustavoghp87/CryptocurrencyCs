@@ -1,106 +1,132 @@
 ﻿using BlockchainAPI.Models;
-using BlockchainAPI.Services.Blockchains;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Net.Http;
+using System.Threading.Tasks;
 
 namespace BlockchainAPI.Services.Transactions
 {
     public class TransactionService
     {
         private List<Transaction> _lstTransactions;
-        private Transaction _transaction;
         private bool _success;
         public TransactionService()
         {
             _lstTransactions = new();
-            _transaction = new();
             _success = false;
         }
-        public bool Add(TransactionRequest transactionReq)
+        public async Task<bool> Add(Transaction transactionReq)
         {
+            Transaction transaction = new();
+            transaction.Amount = transactionReq.Amount;
+            transaction.Fees = transactionReq.Fees;
+            transaction.Miner = MinerService.Get().PublicKey;
+            transaction.Recipient = transactionReq.Recipient;
+            transaction.Sender = transactionReq.Sender;
+            transaction.Signature = transactionReq.Signature;
+            transaction.Timestamp = transactionReq.Timestamp;
+            transaction.Message = TransactionMessageService.Generate(transaction);
             if (transactionReq.Sender == MonetaryIssueService.Get().PublicKey && transactionReq.Fees > 0) return false;
-            GenerateTransaction(transactionReq);
-            if (_transaction == null) return false;
-            Create();
+            if(!IsVerified(transaction)) return false;
+            bool success = await Create(transaction);
             // SendToNodes();
-            return _success;
+            return success;
         }
-        private void GenerateTransaction(TransactionRequest transactionReq)
-        {
-            _transaction.Amount = transactionReq.Amount;
-            _transaction.Fees = transactionReq.Fees;
-            _transaction.Miner = MinerService.Get().PublicKey;
-            _transaction.Recipient = transactionReq.Recipient;
-            _transaction.Sender = transactionReq.Sender;
-            _transaction.Signature = transactionReq.Signature;
-            _transaction.Timestamp = transactionReq.Timestamp;
-            _transaction.Message = TransactionMessageService.GenerateMessage(_transaction);
+        //private bool GenerateTransaction(Transaction transaction)
+        //{
             // validar Timestamp dentro de la franja del bloque
-            if (!IsVerified(_transaction)) _transaction = null;
-        }
+          //  if (!IsVerified(transaction)) transaction = null;
+        //}
         private static bool IsVerified(Transaction transaction)
         {
             return WalletService.VerifyMessage(transaction);
         }
-        private void Create()
+        private async Task<bool> Create(Transaction transaction)
         {
-            if (_transaction.Sender == _transaction.Recipient) _success = false;
-            if (!CheckJustOnePerTurn()) _success = false;
-            if (!WalletService.VerifyMessage(_transaction)) _success = false;
-            if (!HasBalance()) _success = false;
-            _lstTransactions.Add(_transaction);
-            _success = true;
+            if (transaction.Sender == transaction.Recipient) return false;
+            if (!CheckJustOnePerTurn(transaction)) return false;
+            if (!await HasBalance(transaction)) return false;
+            _lstTransactions.Add(transaction);
+            return true;
         }
-        private bool CheckJustOnePerTurn()
+        private bool CheckJustOnePerTurn(Transaction transaction)
         {
-            foreach (var transaction in _lstTransactions)
+            foreach (var aTransaction in _lstTransactions)
             {
-                if (transaction.Sender == _transaction.Sender) return true;
+                if (aTransaction.Sender == transaction.Sender) return false;
             }
-            return false;
+            return true;
         }
-        private bool HasBalance()
+        private async Task<bool> HasBalance(Transaction transaction)
         {
-            if (_transaction.Sender == MonetaryIssueService.Get().PublicKey) return true;    // limitarlo a emisión
-            List<Transaction> lstTransactions = GetAllByAddress();
+            if (transaction.Sender == MonetaryIssueService.Get().PublicKey) return true;    // limitarlo a emisión
+            List<Transaction> lstTransactions = await GetAllByAddress(transaction);
             decimal balance = 0;
-            foreach (var item in lstTransactions)
+            int auxiliar = 0;
+            foreach (Transaction aTransaction in lstTransactions)
             {
-                if (item.Recipient == _transaction.Sender)
-                    balance += item.Amount;
-                else if (item.Miner == _transaction.Sender)
-                    balance += item.Amount;
-                else if (item.Sender == _transaction.Sender)
-                    balance -= item.Amount;
+                if (aTransaction.Signature == transaction.Signature
+                    && aTransaction.Timestamp == transaction.Timestamp)
+                {
+                    auxiliar++;
+                    if (auxiliar > 1) return false;
+                }
+                if (aTransaction.Recipient == transaction.Sender)
+                    balance += aTransaction.Amount;
+                else if (aTransaction.Miner == transaction.Sender)
+                    balance += aTransaction.Amount;
+                else if (aTransaction.Sender == transaction.Sender)
+                    balance -= aTransaction.Amount;
             }
-            return balance >= _transaction.Amount + _transaction.Fees;
+            return balance >= transaction.Amount + transaction.Fees;
         }
-        private List<Transaction> GetAllByAddress()
+        private async Task<List<Transaction>> GetAllByAddress(Transaction transaction)
         {
-            string senderAddress = _transaction.Sender;
+            string senderAddress = transaction.Sender;
             List<Transaction> lstTransactions = new();
-            Blockchain blockchain = BlockchainService.G;
-            List<Block> lstBlocks = (from x in blockchain.Blocks select x).ToList();
-            foreach (var block in lstBlocks.OrderByDescending(x => x.Index))
+            Blockchain blockchain = null;
+            using var httpResponse = await new HttpClient().GetAsync("https://localhost:5001/", HttpCompletionOption.ResponseHeadersRead);
+            httpResponse.EnsureSuccessStatusCode();
+            if (httpResponse.Content is object && httpResponse.Content.Headers.ContentType.MediaType == "application/json")
             {
-                List<Transaction> ownerTransactions =
-                    block.Transactions
-                    .Where(x => x.Sender == senderAddress || x.Recipient == senderAddress || x.Miner == senderAddress)
-                    .ToList();
-                lstTransactions.AddRange(ownerTransactions);
-            }
-            foreach (var transaction in _lstTransactions)
-            {
-                if (transaction.Recipient == senderAddress || transaction.Miner == senderAddress)
+                var contentStream = await httpResponse.Content.ReadAsStreamAsync();
+                using var streamReader = new StreamReader(contentStream);
+                using var jsonReader = new JsonTextReader(streamReader);
+                JsonSerializer serializer = new();
+                try
+                {
+                    blockchain = serializer.Deserialize<Blockchain>(jsonReader);
+                    List<Block> lstBlocks = (from x in blockchain.Blocks select x).ToList();
+                    foreach (var block in lstBlocks.OrderByDescending(x => x.Index))
+                    {
+                        List<Transaction> ownerTransactions =
+                            block.Transactions
+                            .Where(x => x.Sender == senderAddress || x.Recipient == senderAddress || x.Miner == senderAddress)
+                            .ToList();
+                        lstTransactions.AddRange(ownerTransactions);
+                    }
+                    foreach (var aTransaction in _lstTransactions)
+                    {
+                        if (aTransaction.Recipient == senderAddress || aTransaction.Miner == senderAddress)
+                            lstTransactions.Add(aTransaction);
+                    }
                     lstTransactions.Add(transaction);
+                }
+                catch (JsonReaderException) { Console.WriteLine("Invalid JSON."); }
             }
-            lstTransactions.Add(_transaction);
+            else Console.WriteLine("HTTP Response was invalid and cannot be deserialised.");
             return lstTransactions;
         }
         public List<Transaction> GetAll()
         {
             return _lstTransactions;
+        }
+        public void Clear()
+        {
+            _lstTransactions.Clear();
         }
     }
 }
