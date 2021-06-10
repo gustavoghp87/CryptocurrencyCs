@@ -8,6 +8,7 @@ namespace BlockchainAPI.Services.Transactions
         public SignTransactionService(Transaction transaction, string privateKey)
         {
             _transaction = transaction;
+            _transaction.Miner = MinerService.Get().PublicKey;
             Sign(privateKey);
         }
         private void Sign(string privateKey)

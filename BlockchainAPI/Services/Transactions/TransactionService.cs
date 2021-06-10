@@ -23,7 +23,8 @@ namespace BlockchainAPI.Services.Transactions
             transaction.Signature = transactionReq.Signature;
             transaction.Timestamp = transactionReq.Timestamp;
             transaction.Message = TransactionMessageService.Generate(transaction);
-            if (transactionReq.Amount !> 0 && transaction.Fees !> 0) return false;
+            if (transactionReq.Amount < 0 || transaction.Fees < 0) return false;
+            if (transactionReq.Amount == 0 && transaction.Fees == 0) return false;
             if (transactionReq.Sender == IssuerService.Get().PublicKey && transactionReq.Amount > 0) return false;
             if(!IsVerified(transaction)) return false;
             bool success = await Create(transaction);
