@@ -1,11 +1,7 @@
 ﻿using BlockchainAPI.Models;
-using BlockchainAPI.Services;
 using BlockchainAPI.Services.Blockchains;
 using BlockchainAPI.Services.Transactions;
-using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
-using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -82,76 +78,5 @@ namespace BlockchainAPI.Api
             decimal balance = await BalanceService.Get(publicKey, lstCurrentTransactions, _blockchain);
             return Ok(balance);
         }
-
-
-
-
-
-        //[HttpPost("transactions/new")]
-        //public IActionResult New_transaction([FromBody] Transaction transaction)
-        //{
-        //    var response = blockchain.CreateTransaction(transaction);
-        //    if (!response) return NotFound();
-        //    return Ok(response);
-        //}
-
-        //[HttpGet("transactions/get")]
-        //public IActionResult Get_transactions()
-        //{
-        //    return Ok(new { transactions = blockchain.Get() });
-        //}
-
-        //[HttpGet("blockchain")]
-        //public IActionResult Full_Chain()
-        //{
-        //    return Ok(new
-        //    {
-        //        chain = blockchain.GetBlocks(),
-        //        length = blockchain.GetBlocks().Count
-        //    });
-        //}
-
-        //[HttpGet("mine")]
-        //public IActionResult Mine()
-        //{
-        //    var block = blockchain.Mine();
-        //    return Ok(new
-        //    {
-        //        message = "New Block Forged",
-        //        block_number = block.Index,
-        //        transactions = block.Transactions.ToArray(),
-        //        nonce = block.Nonce,
-        //        previousHash = block.PreviousHash
-        //    });
-        //}
-
-        //[HttpPost("nodes/register")]
-        //public IActionResult Register_nodes(string[] nodes)
-        //{
-        //    blockchain.RegisterMany(nodes);
-        //    return Created("", new
-        //    {
-        //        message = "New nodes have been created",
-        //        total_nodes = nodes.Length
-        //    });
-        //}
-
-        //[HttpGet("nodes/resolve")]
-        //public IActionResult Consensus()
-        //{
-        //    return Ok(blockchain.Consensus());
-        //}
-
-        //[HttpGet("nodes/get")]
-        //public IActionResult Get_nodes()
-        //{
-        //    return Ok(new { nodes = blockchain.GetNodes() });
-        //}
-
-        //[HttpGet("wallet/miner")]
-        //public IActionResult GetMinersWallet()
-        //{
-        //    return Ok(blockchain.GetMinersWallets());
-        //}
     }
 }

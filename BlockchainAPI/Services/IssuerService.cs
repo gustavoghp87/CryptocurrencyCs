@@ -2,7 +2,7 @@
 
 namespace BlockchainAPI.Services
 {
-    public static class MonetaryIssueService
+    public static class IssuerService
     {
         public static Wallet Get()
         {

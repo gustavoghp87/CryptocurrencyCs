@@ -24,7 +24,7 @@ namespace BlockchainAPI.Services.Transactions
             transaction.Timestamp = transactionReq.Timestamp;
             transaction.Message = TransactionMessageService.Generate(transaction);
             if (transactionReq.Amount !> 0 && transaction.Fees !> 0) return false;
-            if (transactionReq.Sender == MonetaryIssueService.Get().PublicKey && transactionReq.Amount > 0) return false;
+            if (transactionReq.Sender == IssuerService.Get().PublicKey && transactionReq.Amount > 0) return false;
             if(!IsVerified(transaction)) return false;
             bool success = await Create(transaction);
             // SendToNodes();
@@ -37,7 +37,7 @@ namespace BlockchainAPI.Services.Transactions
         //}
         private static bool IsVerified(Transaction transaction)
         {
-            return WalletService.VerifyMessage(transaction);
+            return WalletService.IsVerifiedMessage(transaction);
         }
         private async Task<bool> Create(Transaction transaction)
         {
@@ -57,7 +57,7 @@ namespace BlockchainAPI.Services.Transactions
         }
         private async Task<bool> HasBalance(Transaction transaction)
         {
-            if (transaction.Sender == MonetaryIssueService.Get().PublicKey) return true;    // limitarlo a emisión
+            if (transaction.Sender == IssuerService.Get().PublicKey) return true;    // limitarlo a emisión
             
             // ver que el signature no se haya usado ya
             int auxiliar = 0;

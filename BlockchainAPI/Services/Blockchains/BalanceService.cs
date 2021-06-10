@@ -31,7 +31,7 @@ namespace BlockchainAPI.Services.Blockchains
                     balance -= aTransaction.Amount;
                 if (sender == aTransaction.Miner)
                     balance += aTransaction.Fees;
-                if (sender == MonetaryIssueService.Get().PublicKey)
+                if (sender == IssuerService.Get().PublicKey)
                     balance -= aTransaction.Fees;
             }
             return balance;

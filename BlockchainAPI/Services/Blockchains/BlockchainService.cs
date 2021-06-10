@@ -21,8 +21,8 @@ namespace BlockchainAPI.Services.Blockchains
             _nodeServ = new();
             _transactionServ = new();
             _blockchain = new();
-            //_blockchain.MonetaryIssueWallet = new();
-            _blockchain.MonetaryIssueWallet = MonetaryIssueService.Get();
+            _blockchain.IssuerWallet = IssuerService.Get();
+            _blockchain.IssuerWallet = IssuerService.Get();
             _minerWallet = MinerService.Get();
             Initialize();
         }
@@ -40,18 +40,8 @@ namespace BlockchainAPI.Services.Blockchains
             else
             {
                 _blockchain.Blocks = new();
-                _blockchain.Difficulty = new();
                 await Mine();
             }
-        }
-
-        public Blockchain Get()
-        {
-            return _blockchain;
-        }
-        public TransactionService GetTransactionService()
-        {
-            return _transactionServ;
         }
         public async Task<bool> Mine()
         {
@@ -86,7 +76,6 @@ namespace BlockchainAPI.Services.Blockchains
                 if (newBlock.Index == block.Index) return false;
             };
             _blockchain.Blocks.Add(newBlock);
-            _blockchain.Difficulty = newDifficulty;
             
             
             // if (newBlock != null) SendToNodes();
@@ -104,17 +93,17 @@ namespace BlockchainAPI.Services.Blockchains
             {
                 Amount = 0,
                 Fees = GetReward(),
-                Miner = MinerService.Get().PublicKey,
-                Recipient = MinerService.Get().PublicKey,
-                Sender = MonetaryIssueService.Get().PublicKey,
+                Miner = _minerWallet.PublicKey,
+                Recipient = _minerWallet.PublicKey,
+                Sender = _blockchain.IssuerWallet.PublicKey,
                 Timestamp = DateTime.UtcNow
             };
-            SignTransactionService signServ = new(transaction, MonetaryIssueService.Get().PrivateKey);
+            SignTransactionService signServ = new(transaction, _blockchain.IssuerWallet.PrivateKey);
             transaction.Message = signServ.GetMessage();
             transaction.Signature = signServ.GetSignature();
             return await _transactionServ.Add(transaction);
         }
-        private int GetReward()                 // reducir Reward a la mitad cada 100 bloques
+        private int GetReward()                 // decrese rewards to a half every 100 blocks
         {
             int reward = 50;
             int auxiliar = _blockchain.Blocks != null ? _blockchain.Blocks.Count : 0;
@@ -126,30 +115,13 @@ namespace BlockchainAPI.Services.Blockchains
             _blockchain.Reward = reward;
             return reward;
         }
-
-
-
-        //public string GetFull()
-        //{
-        //    var response = new
-        //    {
-        //        chain = _chain.ToArray(),
-        //        lenght = _chain.Count
-        //    };
-        //    return JsonConvert.SerializeObject(response);
-        //}
-
-        //internal object Consensus()
-        //{
-        //    bool replaced = ResolveConflicts();
-        //    string message = replaced ? "was replaced" : "is authoritive";
-        //    var response = new
-        //    {
-        //        Message = $"Our chain {message}",
-        //        Chain = _chain
-        //    };
-        //    return response;
-        //}
-
+        public Blockchain Get()
+        {
+            return _blockchain;
+        }
+        public TransactionService GetTransactionService()
+        {
+            return _transactionServ;
+        }
     }
 }

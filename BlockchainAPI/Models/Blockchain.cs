@@ -7,7 +7,6 @@ namespace BlockchainAPI.Models
         public List<Block> Blocks { get; set; }
         public decimal Reward { get; set; }
         public List<Node> Nodes { get; set; }
-        public Wallet MonetaryIssueWallet { get; set; }
-        public int Difficulty { get; set; }
+        public Wallet IssuerWallet { get; set; }
     }
 }

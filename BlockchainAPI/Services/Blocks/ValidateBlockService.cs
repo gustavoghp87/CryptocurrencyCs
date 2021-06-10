@@ -35,7 +35,7 @@ namespace BlockchainAPI.Services.Blocks
             string sign = "";
             foreach (var transaction in block.Transactions)
             {
-                if (transaction.Sender != MonetaryIssueService.Get().PublicKey)
+                if (transaction.Sender != IssuerService.Get().PublicKey)
                     sign += transaction.Signature;
             }
             // var signatures = transactions.Select(x => x.Signature).ToArray();

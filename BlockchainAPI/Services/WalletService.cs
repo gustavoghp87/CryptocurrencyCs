@@ -20,7 +20,7 @@ namespace BlockchainAPI.Services
             var signature = secret.PrivateKey.SignMessage(transaction.Message);
             return signature;
         }
-        public static bool VerifyMessage(Models.Transaction transaction)
+        public static bool IsVerifiedMessage(Models.Transaction transaction)
         {
             string senderPublicKey = transaction.Sender;
             string originalMessage = transaction.Message;
