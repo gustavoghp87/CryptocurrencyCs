@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 
@@ -14,11 +15,10 @@ namespace BlockchainAPI.Services.Nodes
         private Uri _centralServerUrl { get; set; }
         public NodeService()
         {
-            _lstNodes = new();
             _centralServerUrl = CentralServerConnection.GetUri();
             GetAllFromServer();
         }
-        private List<Node> GetAllFromServer()
+        private void GetAllFromServer()
         {
             try
             {
@@ -43,12 +43,10 @@ namespace BlockchainAPI.Services.Nodes
                         Console.WriteLine("Connected Nodes: " + item.Address);
                     }
                 }
-                return _lstNodes;
             }
             catch (Exception e)
             {
                 Console.WriteLine(e.Message);
-                return null;
             }
         }
         public List<Node> GetAll()
@@ -103,7 +101,7 @@ namespace BlockchainAPI.Services.Nodes
         {
             foreach (Node node in _lstNodes)
             {
-                _lstNodes.Clear();
+                _lstNodes = new List<Node>();
                 // get request alive man
                 if (true) _lstNodes.Add(node);
             }

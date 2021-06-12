@@ -29,7 +29,6 @@ namespace BlockchainAPI.Services.Blockchains
         private async void Initialize()
         {
             _lstNodes = _nodeServ.GetAll();
-            _blockchain.Nodes = new();
             _blockchain.Nodes = _lstNodes;
             _nodeServ.RegisterMe();
             Blockchain largestBC = new GetBlockchainsFromNetService().GetLargest();

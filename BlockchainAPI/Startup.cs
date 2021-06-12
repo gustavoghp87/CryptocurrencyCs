@@ -11,6 +11,7 @@ namespace BlockchainAPI
 {
     public class Startup
     {
+        public static readonly string MyCors = "MyCors";
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
@@ -31,17 +32,16 @@ namespace BlockchainAPI
                 //options.SerializerSettings.NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore;
                 options.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
             });
-            services.AddCors(o => o.AddPolicy("MyPolicy", builder =>
+            services.AddCors(o => o.AddPolicy(MyCors, builder =>
             {
                 builder.AllowAnyOrigin()
-                        .AllowAnyMethod()
-                        .AllowAnyHeader();
+                       .AllowAnyMethod()
+                       .AllowAnyHeader();
             }));
             services.AddSingleton<IBlockchainService, BlockchainService>();
         }
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            //app.UseCors();
 
             if (env.IsDevelopment())
             {
@@ -57,6 +57,7 @@ namespace BlockchainAPI
             //});
             app.UseHttpsRedirection();
             app.UseRouting();
+            app.UseCors(MyCors);
             app.UseAuthorization();
             app.UseEndpoints(endpoints =>
             {

@@ -11,7 +11,7 @@ namespace BlockchainAPI.Services.Transactions
                  + transaction.Amount.ToString("0.00000000") + "-"
                  + transaction.Recipient + "-"
                  + transaction.Miner + "-"
-                 + transaction.Fees;
+                 + transaction.Fees.ToString("0.00000000");
         }
     }
 }
